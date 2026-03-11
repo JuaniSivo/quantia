@@ -32,7 +32,7 @@ class CompoundUnit:
         self._f: dict[str, Fraction] = {
             s: Fraction(e)
             for s, e in (factors or {}).items()
-            if e != 0
+            if e != 0 and s != "1"
         }
         self._label = label
 
