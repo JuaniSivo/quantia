@@ -97,7 +97,10 @@ class ProbUnitArray:
         return mean, v
 
     def means(self) -> UnitArray:
-        return UnitArray([self._welford_row(i)[0] for i in range(self._len)], self._unit)
+        return UnitArray(
+            [sum(self._row(i)) / self._n for i in range(self._len)],
+            self._unit
+        )
 
     def stds(self) -> UnitArray:
         return UnitArray([self._welford_row(i)[1] ** 0.5 for i in range(self._len)], self._unit)

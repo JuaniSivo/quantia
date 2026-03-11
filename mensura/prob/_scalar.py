@@ -82,8 +82,7 @@ class ProbUnitFloat:
         return mean, M2 / (n - 1)   # sample variance
 
     def mean(self) -> UnitFloat:
-        m, _ = self._welford()
-        return UnitFloat(m, self._unit)
+        return UnitFloat(sum(self._samples)/self._n, self._unit)
     
     def std(self) -> UnitFloat:
         _, v = self._welford()
