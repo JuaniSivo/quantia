@@ -169,15 +169,21 @@ class ProbUnitFloat:
         if isinstance(o,UnitFloat):     return self.__add__(ProbUnitFloat.from_unitfloat(o,self._n))
         if isinstance(o,(int,float)):   return self._scalar_op(float(o),operator.add)
         return NotImplemented
-    def __radd__(self,o): return self.__add__(o)
+    def __radd__(self, o):
+        if isinstance(o, UnitFloat):
+            return self.__add__(o)
+        return self.__add__(o)
     def __sub__(self,o):
         if isinstance(o,ProbUnitFloat): return self._elem(o,operator.sub)
         if isinstance(o,UnitFloat):     return self.__sub__(ProbUnitFloat.from_unitfloat(o,self._n))
         if isinstance(o,(int,float)):   return self._scalar_op(float(o),operator.sub)
         return NotImplemented
-    def __rsub__(self,o):
-        if isinstance(o,(int,float)):
-            return ProbUnitFloat._from_raw(_array.array('d',(float(o)-v for v in self._samples)),self._unit)
+    def __rsub__(self, o):
+        if isinstance(o, UnitFloat):
+            return ProbUnitFloat.from_unitfloat(o, self._n).__sub__(self)
+        if isinstance(o, (int, float)):
+            return ProbUnitFloat._from_raw(
+                _array.array('d', (float(o) - v for v in self._samples)), self._unit)
         return NotImplemented
     def __mul__(self,o):
         if isinstance(o,ProbUnitFloat):
@@ -186,8 +192,9 @@ class ProbUnitFloat:
         if isinstance(o,UnitFloat):   return self.__mul__(ProbUnitFloat.from_unitfloat(o,self._n))
         if isinstance(o,(int,float)): return self._scalar_op(float(o),operator.mul)
         return NotImplemented
-    def __rmul__(self,o):
-        if isinstance(o,(int,float)): return self._scalar_op(float(o),operator.mul)
+    def __rmul__(self, o):
+        if isinstance(o, (int, float, UnitFloat)):
+            return self.__mul__(o)
         return NotImplemented
     def __truediv__(self,o):
         if isinstance(o,ProbUnitFloat):
