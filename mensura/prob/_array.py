@@ -1,12 +1,11 @@
 from __future__ import annotations
-import array as _array, math, operator, statistics
+import array as _array, math, operator
 from typing import Iterable, Iterator
 from mensura._compound import CompoundUnit, _make_unit
 from mensura._array import UnitArray
 from mensura._scalar import UnitFloat
 from mensura.prob._scalar import ProbUnitFloat
 from mensura._exceptions import IncompatibleUnitsError
-from mensura.prob._copula import _N_SAMPLES
 
 
 class ProbUnitArray:
@@ -87,9 +86,31 @@ class ProbUnitArray:
         out=_array.array('d',(-v for v in self._data))
         return ProbUnitArray._from_flat(out,self._unit,self._len,self._n)
 
-    def means(self)  ->UnitArray: return UnitArray([sum(self._row(i))/self._n for i in range(self._len)],self._unit)
-    def stds(self)   ->UnitArray: return UnitArray([statistics.stdev(self._row(i)) for i in range(self._len)],self._unit)
-    def medians(self)->UnitArray: return UnitArray([statistics.median(self._row(i)) for i in range(self._len)],self._unit)
+    def _welford_row(self, i: int) -> tuple[float, float]:
+        n = 0; mean = 0.0; M2 = 0.0
+        for x in self._row(i):
+            n += 1
+            delta = x - mean
+            mean += delta / n
+            M2   += delta * (x - mean)
+        v = M2 / (n - 1) if n >= 2 else 0.0
+        return mean, v
+
+    def means(self) -> UnitArray:
+        return UnitArray([self._welford_row(i)[0] for i in range(self._len)], self._unit)
+
+    def stds(self) -> UnitArray:
+        return UnitArray([self._welford_row(i)[1] ** 0.5 for i in range(self._len)], self._unit)
+    
+    def medians(self) -> UnitArray:
+        vals = []
+        for i in range(self._len):
+            s   = sorted(self._row(i))
+            mid = self._n // 2
+            m   = s[mid] if self._n % 2 else (s[mid - 1] + s[mid]) / 2
+            vals.append(m)
+        return UnitArray(vals, self._unit)
+    
     def intervals(self,confidence=0.95):
         tail=(1-confidence)/2; result=[]
         for i in range(self._len):

@@ -1,5 +1,5 @@
 from __future__ import annotations
-import array as _array, math, operator, random, statistics
+import array as _array, math, operator, random
 from typing import Iterable
 from mensura._compound import CompoundUnit, _make_unit
 from mensura._scalar import UnitFloat
@@ -64,10 +64,41 @@ class ProbUnitFloat:
 
     # ── Statistics ────────────────────────────────────────────────────────────
 
-    def mean(self)     -> UnitFloat: return UnitFloat(sum(self._samples)/self._n, self._unit)
-    def std(self)      -> UnitFloat: return UnitFloat(statistics.stdev(self._samples), self._unit)
-    def variance(self) -> UnitFloat: return UnitFloat(statistics.variance(self._samples), self._unit)
-    def median(self)   -> UnitFloat: return UnitFloat(statistics.median(self._samples), self._unit)
+    def _welford(self) -> tuple[float, float]:
+        """
+        Single-pass mean and variance using Welford's online algorithm.
+        Returns (mean, variance) without importing statistics.
+        """
+        n = 0
+        mean = 0.0
+        M2   = 0.0
+        for x in self._samples:
+            n    += 1
+            delta = x - mean
+            mean += delta / n
+            M2   += delta * (x - mean)
+        if n < 2:
+            return mean, 0.0
+        return mean, M2 / (n - 1)   # sample variance
+
+    def mean(self) -> UnitFloat:
+        m, _ = self._welford()
+        return UnitFloat(m, self._unit)
+    
+    def std(self) -> UnitFloat:
+        _, v = self._welford()
+        return UnitFloat(v ** 0.5, self._unit)
+
+    def variance(self) -> UnitFloat:
+        _, v = self._welford()
+        return UnitFloat(v, self._unit)
+
+    def median(self) -> UnitFloat:
+        s = sorted(self._samples)
+        mid = self._n // 2
+        m = s[mid] if self._n % 2 else (s[mid - 1] + s[mid]) / 2
+        return UnitFloat(m, self._unit)
+
     def min(self)      -> UnitFloat: return UnitFloat(min(self._samples), self._unit)
     def max(self)      -> UnitFloat: return UnitFloat(max(self._samples), self._unit)
 
@@ -177,6 +208,6 @@ class ProbUnitFloat:
         return 0.0
 
     def __repr__(self):
-        m=sum(self._samples)/self._n; s=statistics.stdev(self._samples)
-        return f"ProbUnitFloat(mean={m:.4g}, std={s:.4g}, unit='{self._unit}', n={self._n})"
+        m, v = self._welford()
+        return f"ProbUnitFloat(mean={m:.4g}, std={v**0.5:.4g}, unit='{self._unit}', n={self._n})"
     def __str__(self): return self.__repr__()
