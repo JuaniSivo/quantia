@@ -70,6 +70,9 @@ class CorrelatedSource:
     }
 
     def __init__(self, n_vars=None, rho=None, corr_matrix=None, n=None):
+        from mensura.prob._scalar import _default_n
+        n = _default_n(n)
+
         if corr_matrix is not None:
             _validate_corr_matrix(corr_matrix)   # 2d
             self._matrix = corr_matrix
@@ -89,7 +92,7 @@ class CorrelatedSource:
             raise ValueError(f"n must be a positive integer, got {n!r}")
         
         from mensura.prob._scalar import _default_n
-        self._n        = _default_n(n)
+        self._n        = n
         self._uniforms = gaussian_copula(n, self._matrix)
         self._used: set[int] = set()
 

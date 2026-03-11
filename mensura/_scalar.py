@@ -30,11 +30,10 @@ class UnitFloat:
 
     @staticmethod
     def _is_single_affine(cu: CompoundUnit) -> "AffineUnit | None":
-        """Return the AffineUnit if cu is a single temperature unit, else None."""
         if len(cu._f) == 1:
             sym, exp = next(iter(cu._f.items()))
             u = get_unit(sym)
-            if isinstance(u, AffineUnit) and u.offset != 0.0 and exp == 1:
+            if isinstance(u, AffineUnit) and exp == 1:   # ← remove `u.offset != 0.0`
                 return u
         return None
 
