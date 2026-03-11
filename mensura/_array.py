@@ -104,7 +104,23 @@ class UnitArray:
     def __len__(self): return len(self._data)
     def __iter__(self) -> Iterator[UnitFloat]: return (UnitFloat(v, self._unit) for v in self._data)
     def __getitem__(self, i):
-        if isinstance(i, slice): return UnitArray(self._data[i], self._unit)
+        # Boolean mask: UnitArray[bool_list]
+        if isinstance(i, (list, tuple)) and i and isinstance(i[0], (bool,)):
+            if len(i) != len(self._data):
+                raise IndexError(
+                    f"Boolean mask length {len(i)} != array length {len(self._data)}")
+            return UnitArray(
+                _array.array('d', (v for v, keep in zip(self._data, i) if keep)),
+                self._unit)
+        # Integer index list: UnitArray[[0, 2, 4]]
+        if isinstance(i, (list, tuple)):
+            return UnitArray(
+                _array.array('d', (self._data[j] for j in i)),
+                self._unit)
+        # Slice
+        if isinstance(i, slice):
+            return UnitArray(self._data[i], self._unit)
+        # Single integer
         return UnitFloat(self._data[i], self._unit)
     def __setitem__(self, i, val):
         if isinstance(val, UnitFloat):
@@ -116,10 +132,15 @@ class UnitArray:
             if not self._unit.is_compatible(val.unit): raise IncompatibleUnitsError(self._unit, val.unit)
             self._data.append(val.value * val.unit.si_factor() / self._unit.si_factor())
         else: self._data.append(float(val))
-
     def __repr__(self):
-        p = list(self._data[:6]); dots = ", ..." if len(self._data) > 6 else ""
-        return f"UnitArray([{', '.join(str(v) for v in p)}{dots}], '{self._unit}')"
+        unit = str(self._unit)
+        n    = len(self._data)
+        if n <= 100:
+            return f"UnitArray({list(self._data)!r}, {unit!r})"
+        head = list(self._data[:3])
+        tail = list(self._data[-3:])
+        return (f"UnitArray(<{n} values>, {unit!r}, "
+                f"first={head}, last={tail})")
     def __str__(self): return self.__repr__()
 
     # ── Serialization ─────────────────────────────────────────────────────────────

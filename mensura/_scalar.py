@@ -128,8 +128,8 @@ class UnitFloat:
     def __gt__(self, o): r=self._cmp(o); return r[0]>r[1]
     def __ge__(self, o): r=self._cmp(o); return r[0]>=r[1]
 
-    def __repr__(self): return f"UnitFloat({self._value!r}, '{self._unit}')"
-    def __str__(self):  return f"{self._value} {self._unit}"
+    def __repr__(self): return f"UnitFloat({self._value!r}, {str(self._unit)!r})"
+    def __str__(self): return f"{self._value} {self._unit}"
     def __format__(self, spec): return f"{self._value:{spec}} {self._unit}"
 
     # ── Serialization ─────────────────────────────────────────────────────────────

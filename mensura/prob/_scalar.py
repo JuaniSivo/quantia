@@ -33,33 +33,33 @@ class ProbUnitFloat:
             unit)
 
     @classmethod
-    def uniform(cls, low: float, high: float, unit, n=_N_SAMPLES):
+    def uniform(cls, low: float, high: float, unit, n=None):
         if low >= high:
             raise ValueError(f"uniform requires low < high, got low={low}, high={high}")
-        return cls._independent(icdf_uniform, unit, n, low, high)
+        return cls._independent(icdf_uniform, unit, _default_n(n), low, high)
 
     @classmethod
-    def normal(cls, mean: float, std: float, unit, n=_N_SAMPLES):
+    def normal(cls, mean: float, std: float, unit, n=None):
         if std <= 0:
             raise ValueError(f"normal requires std > 0, got std={std}")
-        return cls._independent(icdf_normal, unit, n, mean, std)
+        return cls._independent(icdf_normal, unit, _default_n(n), mean, std)
 
     @classmethod
-    def triangular(cls, low: float, mode: float, high: float, unit, n=_N_SAMPLES):
+    def triangular(cls, low: float, mode: float, high: float, unit, n=None):
         if not (low <= mode <= high):
             raise ValueError(f"triangular requires low <= mode <= high, got ({low}, {mode}, {high})")
         if low == high:
             raise ValueError("triangular requires low < high")
-        return cls._independent(icdf_triangular, unit, n, low, mode, high)
+        return cls._independent(icdf_triangular, unit, _default_n(n), low, mode, high)
 
     @classmethod
-    def lognormal(cls, mean: float, std: float, unit, n=_N_SAMPLES):
+    def lognormal(cls, mean: float, std: float, unit, n=None):
         if std <= 0:
             raise ValueError(f"lognormal requires std > 0, got std={std}")
-        return cls._independent(icdf_lognormal, unit, n, mean, std)
+        return cls._independent(icdf_lognormal, unit, _default_n(n), mean, std)
 
     @classmethod
-    def from_unitfloat(cls, uf, n=_N_SAMPLES):
+    def from_unitfloat(cls, uf, n=None):
         return cls._from_raw(_array.array('d',[uf.value]*n), uf.unit)
 
     # ── Statistics ────────────────────────────────────────────────────────────
@@ -226,3 +226,10 @@ class ProbUnitFloat:
             raise ValueError(f"Expected type 'ProbUnitFloat', got {d.get('type')!r}")
         import array as _array
         return cls._from_raw(_array.array('d', d["samples"]), d["unit"])
+    
+
+def _default_n(n: int | None) -> int:
+    if n is not None:
+        return n
+    from mensura._config import get_config
+    return get_config().n_samples

@@ -69,7 +69,7 @@ class CorrelatedSource:
         "lognormal":  icdf_lognormal,
     }
 
-    def __init__(self, n_vars=None, rho=None, corr_matrix=None, n=_N_SAMPLES):
+    def __init__(self, n_vars=None, rho=None, corr_matrix=None, n=None):
         if corr_matrix is not None:
             _validate_corr_matrix(corr_matrix)   # 2d
             self._matrix = corr_matrix
@@ -87,8 +87,9 @@ class CorrelatedSource:
 
         if not isinstance(n, int) or n < 1:
             raise ValueError(f"n must be a positive integer, got {n!r}")
-
-        self._n        = n
+        
+        from mensura.prob._scalar import _default_n
+        self._n        = _default_n(n)
         self._uniforms = gaussian_copula(n, self._matrix)
         self._used: set[int] = set()
 
