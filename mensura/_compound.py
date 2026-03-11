@@ -1,7 +1,7 @@
 from __future__ import annotations
 from fractions import Fraction
-from mensura._registry import _REGISTRY, get_unit, AffineUnit
-from mensura._exceptions import UnknownUnitError, IncompatibleUnitsError, UnitParseError
+from mensura._registry import _REGISTRY, get_unit, register, AffineUnit
+from mensura._exceptions import UnknownUnitError, IncompatibleUnitsError, UnitParseError, DimensionError
 
 
 # ── CompoundUnit ──────────────────────────────────────────────────────────────
@@ -188,18 +188,23 @@ def register_tagged(symbol: str, base_symbol: str, tag: str) -> None:
 
 _TAGGED_LABELS: dict[str, str] = {}   # symbol → tag
 
+_UNIT_CACHE: dict[str, CompoundUnit] = {}
 
 def _make_unit(unit) -> CompoundUnit:
-    """Coerce a str or CompoundUnit to CompoundUnit."""
+    """Coerce a str or CompoundUnit to CompoundUnit. Registry lookups are cached."""
     if isinstance(unit, CompoundUnit):
         return unit
     if isinstance(unit, str):
+        cached = _UNIT_CACHE.get(unit)
+        if cached is not None:
+            return cached
         if unit in _REGISTRY:
-            sym = unit
-            cu  = CompoundUnit({sym: Fraction(1)},
-                               label=sym if sym in _TAGGED_LABELS else None)
-            return cu
-        return parse_unit(unit)
+            cu = CompoundUnit({unit: Fraction(1)},
+                              label=unit if unit in _TAGGED_LABELS else None)
+        else:
+            cu = parse_unit(unit)
+        _UNIT_CACHE[unit] = cu
+        return cu
     raise TypeError(f"unit must be str or CompoundUnit, got {type(unit).__name__!r}")
 
 
@@ -299,28 +304,27 @@ def parse_unit(expr: str) -> CompoundUnit:
         return tok
 
     def parse_exponent() -> Fraction:
-        """Parse the exponent after ^.  Handles  2  -1  (2/3)  (-1/2)."""
+        """
+        Parse the exponent after ^.
+        Handles:  2  -1  (2/3)  (-1/2)
+        Bare integers (no parens) consume ONLY one INT token — never a '/'.
+        Fractions require parens: ^(1/2), ^(-1/2).
+        """
         nxt = peek()
         if nxt and nxt[0] == 'LPAREN':
             consume('LPAREN')
-            # collect tokens until RPAREN
             parts = []
             while peek() and peek()[0] != 'RPAREN':
                 parts.append(consume())
             consume('RPAREN')
-            # reassemble and evaluate as Fraction
             inner = "".join(v for _, v in parts)
             try:
                 return Fraction(inner).limit_denominator(1000)
             except (ValueError, ZeroDivisionError):
                 raise UnitParseError(expr, f"invalid exponent '({inner})'")
         elif nxt and nxt[0] == 'INT':
+            # bare integer only — do NOT consume a following '/'
             _, val = consume('INT')
-            # peek for /INT (fraction without parens, e.g. ^1/2 — rare but handle it)
-            if peek() and peek() == ('OP', '/'):
-                consume('OP')
-                _, den = consume('INT')
-                return Fraction(int(val), int(den))
             return Fraction(int(val))
         else:
             raise UnitParseError(expr, "expected exponent after '^'")
