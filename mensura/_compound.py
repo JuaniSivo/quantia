@@ -85,7 +85,13 @@ class CompoundUnit:
     # ── SI ───────────────────────────────────────────────────────────────────
 
     def si_factor(self) -> float:
-        """Total multiplicative factor to convert to SI (offset units excluded)."""
+        """Total multiplicative factor to convert to SI (offset units excluded).
+        Result is cached on the instance — CompoundUnit is immutable after init.
+        """
+        try:
+            return self._si_factor_cache          # ← fast path (4c)
+        except AttributeError:
+            pass
         r = 1.0
         for s, e in self._f.items():
             u = get_unit(s)
@@ -94,6 +100,7 @@ class CompoundUnit:
                     f"Unit '{s}' has a non-zero offset and cannot be used "
                     "in compound unit expressions. Use UnitFloat.to() instead.")
             r *= u.to_si ** float(e)
+        self._si_factor_cache = r                 # ← store (4c)
         return r
 
     def to_si_compound(self) -> "CompoundUnit":

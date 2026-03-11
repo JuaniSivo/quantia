@@ -127,3 +127,58 @@ class ProbUnitArray:
         dots=", ..." if self._len>4 else ""
         return f"ProbUnitArray(means=[{', '.join(ms)}{dots}], unit='{self._unit}', len={self._len}, n={self._n})"
     def __str__(self): return self.__repr__()
+
+    # ── Serialization ─────────────────────────────────────────────────────────────
+    
+    def to_dict(self) -> dict:
+        return {
+            "type": "ProbUnitArray",
+            "unit": str(self._unit),
+            "len":  self._len,
+            "n":    self._n,
+            "data": list(self._data),
+        }
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "ProbUnitArray":
+        if d.get("type") != "ProbUnitArray":
+            raise ValueError(f"Expected type 'ProbUnitArray', got {d.get('type')!r}")
+        import array as _array
+        return cls._from_flat(_array.array('d', d["data"]), d["unit"], d["len"], d["n"])
+    
+    def to_csv(self, path, confidence: float = 0.95) -> None:
+        """
+        Write per-element statistics (mean, std, CI bounds) to CSV.
+
+        Columns: mean, std, ci_lo, ci_hi  — all in the array's unit.
+        """
+        import csv, math
+        from pathlib import Path
+        unit_str = str(self._unit)
+        tail = (1 - confidence) / 2
+        lo_lbl = f"ci_{tail*100:.1f}pct [{unit_str}]"
+        hi_lbl = f"ci_{(1-tail)*100:.1f}pct [{unit_str}]"
+        with Path(path).open("w", newline="", encoding="utf-8") as f:
+            w = csv.writer(f)
+            w.writerow([f"mean [{unit_str}]", f"std [{unit_str}]", lo_lbl, hi_lbl])
+            for i in range(self._len):
+                mean, var = self._welford_row(i)
+                s   = sorted(self._row(i))
+                lo  = s[int(math.floor(tail * self._n))]
+                hi  = s[int(math.ceil((1 - tail) * self._n)) - 1]
+                w.writerow([mean, var ** 0.5, lo, hi])
+
+    def samples_to_csv(self, path) -> None:
+        """
+        Write the full sample matrix to CSV.
+
+        Shape: self._len rows × self._n columns.
+        Header row: sample_0, sample_1, …
+        """
+        import csv
+        from pathlib import Path
+        with Path(path).open("w", newline="", encoding="utf-8") as f:
+            w = csv.writer(f)
+            w.writerow([f"sample_{j}" for j in range(self._n)])
+            for i in range(self._len):
+                w.writerow(list(self._row(i)))

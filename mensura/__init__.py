@@ -10,6 +10,7 @@ from mensura._exceptions  import (
 )
 from mensura._compound    import parse_unit, register_alias, register_tagged
 from mensura._registry    import register, get_unit, registered_symbols
+from mensura._io import save, load, from_dict   # noqa: F401
 
 def Q(value: float, unit) -> UnitFloat:
     """Exact scalar: Q(9.81, 'm/s^2')"""
@@ -38,4 +39,6 @@ __all__ = [
     "register", "get_unit", "registered_symbols",
     # exceptions
     "UnknownUnitError", "IncompatibleUnitsError", "DimensionError", "UnitParseError",
+    # io
+    "save", "load", "from_dict"
 ]

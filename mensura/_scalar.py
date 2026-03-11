@@ -131,3 +131,16 @@ class UnitFloat:
     def __repr__(self): return f"UnitFloat({self._value!r}, '{self._unit}')"
     def __str__(self):  return f"{self._value} {self._unit}"
     def __format__(self, spec): return f"{self._value:{spec}} {self._unit}"
+
+    # ── Serialization ─────────────────────────────────────────────────────────────
+
+    def to_dict(self) -> dict:
+        """Return a plain dict that round-trips through UnitFloat.from_dict()."""
+        return {"type": "UnitFloat", "value": self._value, "unit": str(self._unit)}
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "UnitFloat":
+        """Reconstruct from a dict produced by to_dict()."""
+        if d.get("type") != "UnitFloat":
+            raise ValueError(f"Expected type 'UnitFloat', got {d.get('type')!r}")
+        return cls(d["value"], d["unit"])

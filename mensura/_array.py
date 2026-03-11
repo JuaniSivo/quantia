@@ -121,3 +121,32 @@ class UnitArray:
         p = list(self._data[:6]); dots = ", ..." if len(self._data) > 6 else ""
         return f"UnitArray([{', '.join(str(v) for v in p)}{dots}], '{self._unit}')"
     def __str__(self): return self.__repr__()
+
+    # ── Serialization ─────────────────────────────────────────────────────────────
+
+    def to_dict(self) -> dict:
+        return {"type": "UnitArray", "values": list(self._data), "unit": str(self._unit)}
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "UnitArray":
+        if d.get("type") != "UnitArray":
+            raise ValueError(f"Expected type 'UnitArray', got {d.get('type')!r}")
+        return cls(d["values"], d["unit"])
+    
+    def to_csv(self, path, header: str | None = None) -> None:
+        """
+        Write values to a single-column CSV file.
+
+        Parameters
+        ----------
+        path   : str | Path
+        header : str, optional.  Defaults to "value [<unit>]".
+        """
+        import csv
+        from pathlib import Path
+        col = header or f"value [{self._unit}]"
+        with Path(path).open("w", newline="", encoding="utf-8") as f:
+            w = csv.writer(f)
+            w.writerow([col])
+            for v in self._data:
+                w.writerow([v])

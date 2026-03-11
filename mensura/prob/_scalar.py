@@ -210,3 +210,19 @@ class ProbUnitFloat:
         m, v = self._welford()
         return f"ProbUnitFloat(mean={m:.4g}, std={v**0.5:.4g}, unit='{self._unit}', n={self._n})"
     def __str__(self): return self.__repr__()
+
+    # ── Serialization ─────────────────────────────────────────────────────────────
+
+    def to_dict(self) -> dict:
+        return {
+            "type":    "ProbUnitFloat",
+            "samples": list(self._samples),
+            "unit":    str(self._unit),
+        }
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "ProbUnitFloat":
+        if d.get("type") != "ProbUnitFloat":
+            raise ValueError(f"Expected type 'ProbUnitFloat', got {d.get('type')!r}")
+        import array as _array
+        return cls._from_raw(_array.array('d', d["samples"]), d["unit"])
