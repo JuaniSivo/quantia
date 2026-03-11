@@ -20,8 +20,12 @@ class ProbUnitFloat:
 
     @classmethod
     def _from_raw(cls, samples, unit):
-        obj=object.__new__(cls); obj._samples=samples
-        obj._unit=_make_unit(unit); obj._n=len(samples); return obj
+        obj = object.__new__(cls)
+        obj._samples = samples
+        obj._unit    = _make_unit(unit)
+        obj._n       = len(samples)
+        # no _sorted_cache — will be built lazily on first access
+        return obj
 
     # ── 2d: validated factories ───────────────────────────────────────────────
 
@@ -80,6 +84,12 @@ class ProbUnitFloat:
         if n < 2:
             return mean, 0.0
         return mean, M2 / (n - 1)   # sample variance
+    
+    @property
+    def _sorted(self):
+        if not hasattr(self, '_sorted_cache'):
+            self._sorted_cache = sorted(self._samples)
+        return self._sorted_cache
 
     def mean(self) -> UnitFloat:
         return UnitFloat(sum(self._samples)/self._n, self._unit)
@@ -92,27 +102,28 @@ class ProbUnitFloat:
         _, v = self._welford()
         return UnitFloat(v, self._unit)
 
-    def median(self) -> UnitFloat:
-        s = sorted(self._samples)
-        mid = self._n // 2
-        m = s[mid] if self._n % 2 else (s[mid - 1] + s[mid]) / 2
-        return UnitFloat(m, self._unit)
-
     def min(self)      -> UnitFloat: return UnitFloat(min(self._samples), self._unit)
     def max(self)      -> UnitFloat: return UnitFloat(max(self._samples), self._unit)
 
+    def median(self) -> UnitFloat:
+        s   = self._sorted
+        mid = self._n // 2
+        m   = s[mid] if self._n % 2 else (s[mid - 1] + s[mid]) / 2
+        return UnitFloat(m, self._unit)
+
     def interval(self, confidence=0.95):
-        if not 0 < confidence < 1:   # 2d
+        if not 0 < confidence < 1:
             raise ValueError(f"confidence must be in (0, 1), got {confidence}")
-        tail=( 1-confidence)/2; s=sorted(self._samples)
-        return (UnitFloat(s[int(math.floor(tail*self._n))], self._unit),
-                UnitFloat(s[int(math.ceil((1-tail)*self._n))-1], self._unit))
+        tail = (1 - confidence) / 2
+        s    = self._sorted
+        return (UnitFloat(s[int(math.floor(tail * self._n))], self._unit),
+                UnitFloat(s[int(math.ceil((1 - tail) * self._n)) - 1], self._unit))
 
     def percentile(self, p):
-        if not 0 <= p <= 100:        # 2d
+        if not 0 <= p <= 100:
             raise ValueError(f"percentile p must be in [0, 100], got {p}")
-        s=sorted(self._samples)
-        return UnitFloat(s[max(0,min(int(round(p/100*(self._n-1))),self._n-1))], self._unit)
+        s = self._sorted
+        return UnitFloat(s[max(0, min(int(round(p / 100 * (self._n - 1))), self._n - 1))], self._unit)
 
     def histogram(self, bins=10):
         if bins < 1: raise ValueError(f"bins must be >= 1, got {bins}")
