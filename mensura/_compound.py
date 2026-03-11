@@ -1,4 +1,5 @@
 from __future__ import annotations
+import functools
 from fractions import Fraction
 from mensura._registry import _REGISTRY, get_unit, register, AffineUnit
 from mensura._exceptions import UnknownUnitError, IncompatibleUnitsError, UnitParseError, DimensionError
@@ -265,6 +266,7 @@ def _tokenize(expr: str) -> list[tuple[str, str]]:
     return tokens
 
 
+@functools.lru_cache(maxsize=512)
 def parse_unit(expr: str) -> CompoundUnit:
     """
     Parse a unit expression string into a CompoundUnit.
