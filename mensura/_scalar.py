@@ -2,21 +2,8 @@ from __future__ import annotations
 import math
 import operator
 from mensura._compound import CompoundUnit, _make_unit
-from mensura._registry import get_unit
+from mensura._registry import get_unit, AffineUnit
 from mensura._exceptions import IncompatibleUnitsError, DimensionError
-
-
-def _to_kelvin(v: float, sym: str) -> float:
-    if sym == "K":   return v
-    if sym == "°C":  return v + 273.15
-    if sym == "°F":  return (v + 459.67) * 5 / 9
-    raise DimensionError(f"Not a temperature unit: '{sym}'")
-
-def _from_kelvin(v: float, sym: str) -> float:
-    if sym == "K":   return v
-    if sym == "°C":  return v - 273.15
-    if sym == "°F":  return v * 9 / 5 - 459.67
-    raise DimensionError(f"Not a temperature unit: '{sym}'")
 
 
 class UnitFloat:
@@ -25,21 +12,36 @@ class UnitFloat:
     __slots__ = ("_value", "_unit")
 
     def __init__(self, value: float, unit):
+        # 2d: validate value
+        if not isinstance(value, (int, float)):
+            raise TypeError(
+                f"UnitFloat value must be numeric, got {type(value).__name__!r}")
+        if math.isnan(value):
+            raise ValueError("UnitFloat value must not be NaN")
         self._value = float(value)
-        self._unit  = _make_unit(unit)
+        self._unit  = _make_unit(unit)   # raises UnknownUnitError / UnitParseError
 
     @property
-    def value(self) -> float:        return self._value
+    def value(self) -> float:           return self._value
     @property
-    def unit(self) -> CompoundUnit:  return self._unit
+    def unit(self) -> CompoundUnit:     return self._unit
 
-    # ── Conversion ───────────────────────────────────────────────────────────
+    # ── 2c: Unified temperature conversion via AffineUnit ────────────────────
+
+    @staticmethod
+    def _is_single_affine(cu: CompoundUnit) -> "AffineUnit | None":
+        """Return the AffineUnit if cu is a single temperature unit, else None."""
+        if len(cu._f) == 1:
+            sym, exp = next(iter(cu._f.items()))
+            u = get_unit(sym)
+            if isinstance(u, AffineUnit) and u.offset != 0.0 and exp == 1:
+                return u
+        return None
 
     def to_si(self) -> "UnitFloat":
-        if len(self._unit._f) == 1:
-            s, e = next(iter(self._unit._f.items()))
-            if get_unit(s).quantity == "temperature" and e == 1:
-                return UnitFloat(_to_kelvin(self._value, s), "K")
+        affine = self._is_single_affine(self._unit)
+        if affine:
+            return UnitFloat(affine.to_kelvin(self._value), "K")
         return UnitFloat(self._value * self._unit.si_factor(),
                          self._unit.to_si_compound())
 
@@ -48,12 +50,16 @@ class UnitFloat:
 
     def to(self, target) -> "UnitFloat":
         tcu = _make_unit(target)
-        if isinstance(target, str):
-            u = get_unit(target)
-            if u.quantity == "temperature":
-                s, _ = next(iter(self._unit._f.items()))
-                k = _to_kelvin(self._value, s)
-                return UnitFloat(_from_kelvin(k, target), target)
+        # Temperature path — single affine on both sides
+        src_affine = self._is_single_affine(self._unit)
+        tgt_affine = self._is_single_affine(tcu)
+        if src_affine or tgt_affine:
+            if not (src_affine and tgt_affine):
+                raise DimensionError(
+                    "Cannot mix temperature and non-temperature units in .to()")
+            k = src_affine.to_kelvin(self._value)
+            return UnitFloat(tgt_affine.from_kelvin(k), target)
+        # General path
         if not self._unit.is_compatible(tcu):
             raise IncompatibleUnitsError(self._unit, tcu)
         return UnitFloat(
@@ -67,22 +73,17 @@ class UnitFloat:
         return o._value * o._unit.si_factor() / self._unit.si_factor()
 
     def __add__(self, o):
-        if isinstance(o, UnitFloat):
-            return UnitFloat(self._value + self._coerce(o), self._unit)
-        if isinstance(o, (int, float)):
-            return UnitFloat(self._value + o, self._unit)
+        if isinstance(o, UnitFloat):  return UnitFloat(self._value + self._coerce(o), self._unit)
+        if isinstance(o, (int,float)):return UnitFloat(self._value + o,               self._unit)
         return NotImplemented
     def __radd__(self, o): return self.__add__(o)
 
     def __sub__(self, o):
-        if isinstance(o, UnitFloat):
-            return UnitFloat(self._value - self._coerce(o), self._unit)
-        if isinstance(o, (int, float)):
-            return UnitFloat(self._value - o, self._unit)
+        if isinstance(o, UnitFloat):  return UnitFloat(self._value - self._coerce(o), self._unit)
+        if isinstance(o, (int,float)):return UnitFloat(self._value - o,               self._unit)
         return NotImplemented
     def __rsub__(self, o):
-        if isinstance(o, (int, float)):
-            return UnitFloat(o - self._value, self._unit)
+        if isinstance(o, (int,float)): return UnitFloat(o - self._value, self._unit)
         return NotImplemented
 
     def __mul__(self, o):
@@ -90,12 +91,10 @@ class UnitFloat:
             cu = self._unit * o._unit
             return UnitFloat(self._value * o._value,
                              CompoundUnit.dimensionless() if cu.is_dimensionless() else cu)
-        if isinstance(o, (int, float)):
-            return UnitFloat(self._value * o, self._unit)
+        if isinstance(o, (int,float)): return UnitFloat(self._value * o, self._unit)
         return NotImplemented
     def __rmul__(self, o):
-        if isinstance(o, (int, float)):
-            return UnitFloat(self._value * o, self._unit)
+        if isinstance(o, (int,float)): return UnitFloat(self._value * o, self._unit)
         return NotImplemented
 
     def __truediv__(self, o):
@@ -103,16 +102,13 @@ class UnitFloat:
             cu = self._unit / o._unit
             return UnitFloat(self._value / o._value,
                              CompoundUnit.dimensionless() if cu.is_dimensionless() else cu)
-        if isinstance(o, (int, float)):
-            return UnitFloat(self._value / o, self._unit)
+        if isinstance(o, (int,float)): return UnitFloat(self._value / o, self._unit)
         return NotImplemented
     def __rtruediv__(self, o):
-        if isinstance(o, (int, float)):
-            return UnitFloat(o / self._value, self._unit.invert())
+        if isinstance(o, (int,float)): return UnitFloat(o / self._value, self._unit.invert())
         return NotImplemented
 
-    def __pow__(self, e):
-        return UnitFloat(self._value ** e, self._unit ** e)
+    def __pow__(self, e): return UnitFloat(self._value**e, self._unit**e)
     def __neg__(self):  return UnitFloat(-self._value, self._unit)
     def __abs__(self):  return UnitFloat(abs(self._value), self._unit)
     def __float__(self): return self._value
@@ -121,20 +117,16 @@ class UnitFloat:
     def __floor__(self): return UnitFloat(math.floor(self._value), self._unit)
     def __ceil__(self):  return UnitFloat(math.ceil(self._value),  self._unit)
 
-    # ── Comparison ───────────────────────────────────────────────────────────
-
     def _cmp(self, o):
-        if isinstance(o, UnitFloat):  return self.si_value(), o.si_value()
-        if isinstance(o, (int,float)):return self.si_value(), float(o)
+        if isinstance(o, UnitFloat):   return self.si_value(), o.si_value()
+        if isinstance(o, (int,float)): return self.si_value(), float(o)
         return NotImplemented
-
     def __eq__(self, o):
-        r = self._cmp(o)
-        return r is not NotImplemented and math.isclose(r[0], r[1])
-    def __lt__(self, o): r = self._cmp(o); return r[0] <  r[1]
-    def __le__(self, o): r = self._cmp(o); return r[0] <= r[1]
-    def __gt__(self, o): r = self._cmp(o); return r[0] >  r[1]
-    def __ge__(self, o): r = self._cmp(o); return r[0] >= r[1]
+        r = self._cmp(o); return r is not NotImplemented and math.isclose(r[0], r[1])
+    def __lt__(self, o): r=self._cmp(o); return r[0]<r[1]
+    def __le__(self, o): r=self._cmp(o); return r[0]<=r[1]
+    def __gt__(self, o): r=self._cmp(o); return r[0]>r[1]
+    def __ge__(self, o): r=self._cmp(o); return r[0]>=r[1]
 
     def __repr__(self): return f"UnitFloat({self._value!r}, '{self._unit}')"
     def __str__(self):  return f"{self._value} {self._unit}"

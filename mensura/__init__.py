@@ -1,25 +1,22 @@
-# 1. Load all unit domains (populates _REGISTRY and _ALIASES)
-import mensura.units  # noqa: F401
+import mensura.units  # noqa: F401  — populates registry + aliases
 
-# 2. Public types
-from mensura._scalar       import UnitFloat
-from mensura._array        import UnitArray
-from mensura.prob._scalar  import ProbUnitFloat
-from mensura.prob._array   import ProbUnitArray
-from mensura.prob._copula  import CorrelatedSource
-from mensura._exceptions   import (
-    UnknownUnitError, IncompatibleUnitsError, DimensionError
+from mensura._scalar      import UnitFloat
+from mensura._array       import UnitArray
+from mensura.prob._scalar import ProbUnitFloat
+from mensura.prob._array  import ProbUnitArray
+from mensura.prob._copula import CorrelatedSource
+from mensura._exceptions  import (
+    UnknownUnitError, IncompatibleUnitsError, DimensionError, UnitParseError
 )
-from mensura._compound     import parse_unit, register_alias
-from mensura._registry     import register, get_unit, registered_symbols
+from mensura._compound    import parse_unit, register_alias, register_tagged
+from mensura._registry    import register, get_unit, registered_symbols
 
-# 3. Convenience factories
 def Q(value: float, unit) -> UnitFloat:
     """Exact scalar: Q(9.81, 'm/s^2')"""
     return UnitFloat(value, unit)
 
 def QA(values, unit) -> UnitArray:
-    """Exact array: QA([1, 2, 3], 'km')"""
+    """Exact array:  QA([1.0, 2.0, 3.0], 'km')"""
     return UnitArray(values, unit)
 
 def QP(low: float, high: float, unit, n: int = 1000) -> ProbUnitFloat:
@@ -31,9 +28,14 @@ def QPA(elements) -> ProbUnitArray:
     return ProbUnitArray(elements)
 
 __all__ = [
+    # factories
     "Q", "QA", "QP", "QPA",
+    # types
     "UnitFloat", "UnitArray", "ProbUnitFloat", "ProbUnitArray",
     "CorrelatedSource",
-    "parse_unit", "register_alias", "register", "get_unit", "registered_symbols",
-    "UnknownUnitError", "IncompatibleUnitsError", "DimensionError",
+    # unit utilities
+    "parse_unit", "register_alias", "register_tagged",
+    "register", "get_unit", "registered_symbols",
+    # exceptions
+    "UnknownUnitError", "IncompatibleUnitsError", "DimensionError", "UnitParseError",
 ]

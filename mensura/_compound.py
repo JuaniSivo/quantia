@@ -1,47 +1,55 @@
 from __future__ import annotations
 from fractions import Fraction
-from mensura._registry import _REGISTRY, get_unit, register
-from mensura._exceptions import UnknownUnitError, IncompatibleUnitsError
+from mensura._registry import _REGISTRY, get_unit, AffineUnit
+from mensura._exceptions import UnknownUnitError, IncompatibleUnitsError, UnitParseError
 
 
-_SI_BASES = frozenset({"m", "kg", "s", "A", "K", "mol", "cd", "1"})
-
-_DERIVED_DECOMPOSITION: dict[str, dict] = {}
-
-def _register_decomposition(symbol: str, factors: dict) -> None:
-    from fractions import Fraction
-    _DERIVED_DECOMPOSITION[symbol] = {s: Fraction(e) for s, e in factors.items()}
-
+# ── CompoundUnit ──────────────────────────────────────────────────────────────
 
 class CompoundUnit:
     """
-    A product of base units raised to rational exponents.
+    A product of base units raised to rational exponents, with an optional
+    semantic label that prevents dimensional cancellation.
 
-    Internally stored as {symbol: Fraction(exponent)}.
-    Zero-exponent entries are always dropped.
+    Internal storage: {symbol: Fraction(exponent)}
+
+    The `label` field is used for semantic / tagged units (Phase 2e).
+    When label is set, str() shows the label instead of the expanded form,
+    and division between compatible-but-differently-labeled units does NOT
+    cancel to dimensionless.
 
     Examples
     --------
-    kg·m/s²  →  {"kg": Fraction(1), "m": Fraction(1), "s": Fraction(-2)}
+    kg·m/s²          → {"kg":1, "m":1, "s":-2},  label=None
+    Sm3_res/Sm3_st   → {"m3":1, "m3":-1} normally cancels,
+                        but label="Sm3_res/Sm3_st" prevents that.
     """
 
-    def __init__(self, factors: dict[str, Fraction | int] | None = None):
+    def __init__(self,
+                 factors: dict[str, Fraction | int] | None = None,
+                 label: str | None = None):
         self._f: dict[str, Fraction] = {
             s: Fraction(e)
             for s, e in (factors or {}).items()
             if e != 0
         }
+        self._label = label
 
     # ── Factories ────────────────────────────────────────────────────────────
 
     @classmethod
     def from_symbol(cls, symbol: str) -> "CompoundUnit":
-        get_unit(symbol)          # validates; raises UnknownUnitError if missing
+        get_unit(symbol)
         return cls({symbol: Fraction(1)})
 
     @classmethod
     def dimensionless(cls) -> "CompoundUnit":
         return cls({})
+
+    @classmethod
+    def labeled(cls, label: str, factors: dict[str, Fraction | int]) -> "CompoundUnit":
+        """Create a semantically labeled compound unit that won't auto-cancel."""
+        return cls(factors, label=label)
 
     # ── Algebra ──────────────────────────────────────────────────────────────
 
@@ -49,17 +57,26 @@ class CompoundUnit:
         m = dict(self._f)
         for s, e in other._f.items():
             m[s] = m.get(s, Fraction(0)) + e
-        return CompoundUnit(m)
+        # Labels only survive if both operands share the same label
+        label = self._label if self._label == other._label else None
+        return CompoundUnit(m, label=label)
 
     def __truediv__(self, other: "CompoundUnit") -> "CompoundUnit":
+        # 2e: if both have labels, produce a new labeled ratio instead of cancelling
+        if self._label is not None and other._label is not None:
+            new_label = f"{self._label}/{other._label}"
+            m = dict(self._f)
+            for s, e in other._f.items():
+                m[s] = m.get(s, Fraction(0)) - e
+            return CompoundUnit(m, label=new_label)
         m = dict(self._f)
         for s, e in other._f.items():
             m[s] = m.get(s, Fraction(0)) - e
         return CompoundUnit(m)
 
-    def __pow__(self, exp: int | float | Fraction) -> "CompoundUnit":
+    def __pow__(self, exp) -> "CompoundUnit":
         e = Fraction(exp).limit_denominator(100)
-        return CompoundUnit({s: f * e for s, f in self._f.items()})
+        return CompoundUnit({s: f * e for s, f in self._f.items()}, label=self._label)
 
     def invert(self) -> "CompoundUnit":
         return CompoundUnit({s: -e for s, e in self._f.items()})
@@ -67,38 +84,23 @@ class CompoundUnit:
     # ── SI ───────────────────────────────────────────────────────────────────
 
     def si_factor(self) -> float:
-        """Total multiplicative factor to convert to SI."""
+        """Total multiplicative factor to convert to SI (offset units excluded)."""
         r = 1.0
         for s, e in self._f.items():
             u = get_unit(s)
-            if u.quantity == "temperature":
+            if isinstance(u, AffineUnit) and u.offset != 0.0:
                 raise DimensionError(
-                    "Temperature units cannot appear in compound units. "
-                    "Use UnitFloat.to() for temperature conversion.")
+                    f"Unit '{s}' has a non-zero offset and cannot be used "
+                    "in compound unit expressions. Use UnitFloat.to() instead.")
             r *= u.to_si ** float(e)
         return r
-    
+
     def to_si_compound(self) -> "CompoundUnit":
-        result: dict[str, Fraction] = {}
-
-        def resolve(sym: str, exp: Fraction) -> None:
-            if sym in _SI_BASES:
-                result[sym] = result.get(sym, Fraction(0)) + exp
-                return
-            if sym in _DERIVED_DECOMPOSITION:
-                for base_sym, base_exp in _DERIVED_DECOMPOSITION[sym].items():
-                    result[base_sym] = result.get(base_sym, Fraction(0)) + exp * base_exp
-                return
-            si_sym = get_unit(sym).si_unit
-            if si_sym == sym or si_sym in _SI_BASES:
-                result[si_sym] = result.get(si_sym, Fraction(0)) + exp
-            else:
-                resolve(si_sym, exp)
-
+        m: dict[str, Fraction] = {}
         for s, e in self._f.items():
-            resolve(s, e)
-
-        return CompoundUnit(result)
+            si = get_unit(s).si_unit
+            m[si] = m.get(si, Fraction(0)) + e
+        return CompoundUnit(m)
 
     # ── Compatibility ─────────────────────────────────────────────────────────
 
@@ -106,30 +108,22 @@ class CompoundUnit:
         return self.to_si_compound()._f == other.to_si_compound()._f
 
     def is_dimensionless(self) -> bool:
+        # Labeled units are never considered dimensionless even if factors cancel
+        if self._label:
+            return False
         return not self._f
 
     def canonical_key(self) -> frozenset:
-        """Physical fingerprint — used for alias lookup."""
         return frozenset(self.to_si_compound()._f.items())
 
     # ── Display ──────────────────────────────────────────────────────────────
 
     def __str__(self) -> str:
-        # If the unit is a single factor with exponent 1 and that symbol is
-        # directly registered, display it as-is — never let the alias table
-        # override an explicit named unit like "kPa", "bar", "psi".
-        if len(self._f) == 1:
-            sym, exp = next(iter(self._f.items()))
-            if exp == Fraction(1) and sym in _REGISTRY:
-                return sym
-
-        # For compound results (from arithmetic), check alias table so that
-        # e.g. kg·m/s² displays as "N" and N·m displays as "J".
+        if self._label:
+            return self._label
         alias = _ALIASES.get(self.canonical_key())
         if alias:
             return alias
-
-        # Fallback: build the expression string
         if not self._f:
             return "1"
         num = sorted((s, e)  for s, e in self._f.items() if e > 0)
@@ -149,9 +143,9 @@ class CompoundUnit:
         n = fmt(num) or "1"
         return f"{n}/{fmt(den)}" if den else n
 
-    def __repr__(self): return f"CompoundUnit({self._f!r})"
-    def __eq__(self, o): return isinstance(o, CompoundUnit) and self._f == o._f
-    def __hash__(self): return hash(frozenset(self._f.items()))
+    def __repr__(self): return f"CompoundUnit({self._f!r}, label={self._label!r})"
+    def __eq__(self, o): return isinstance(o, CompoundUnit) and self._f == o._f and self._label == o._label
+    def __hash__(self): return hash((frozenset(self._f.items()), self._label))
 
 
 # ── Alias registry ────────────────────────────────────────────────────────────
@@ -160,54 +154,39 @@ _ALIASES: dict[frozenset, str] = {}
 
 
 def register_alias(display: str, compound_expr: str) -> None:
-    """
-    Register a display name for a compound unit fingerprint.
-    E.g. register_alias("J", "N·m")
-    """
     _ALIASES[parse_unit(compound_expr).canonical_key()] = display
 
 
-# ── Parser ────────────────────────────────────────────────────────────────────
+# ── 2e: Semantic / tagged unit registration ───────────────────────────────────
 
-def parse_unit(expr: str) -> CompoundUnit:
+def register_tagged(symbol: str, base_symbol: str, tag: str) -> None:
     """
-    Parse a unit expression string into a CompoundUnit.
+    Register a semantically tagged unit that shares the same SI dimensions
+    as base_symbol but will not cancel when divided by another tagged unit.
 
-    Supports:
-      · or * for multiplication
-      /  splits numerator and denominator (first occurrence)
-      ^  for integer or fractional exponents, e.g. m^2, kg^(1/2)
+    Example
+    -------
+    register_tagged("Sm3_res", "m3", "reservoir")
+    register_tagged("Sm3_st",  "m3", "stock_tank")
 
-    Examples
-    --------
-    parse_unit("kg·m/s^2")   →  CompoundUnit({"kg":1, "m":1, "s":-2})
-    parse_unit("m^(1/2)")    →  CompoundUnit({"m": Fraction(1,2)})
+    Q(100, "Sm3_res") / Q(1, "Sm3_st")
+    → UnitFloat(100.0, 'Sm3_res/Sm3_st')   # does not cancel to 1
     """
-    expr = expr.strip()
-    num_str, den_str = expr.split("/", 1) if "/" in expr else (expr, "")
+    from mensura._registry import Unit
+    base = get_unit(base_symbol)
+    # Register a plain Unit with the same SI properties
+    register(symbol, Unit(
+        name     = f"{base.name} [{tag}]",
+        quantity = f"{base.quantity}_{tag}",
+        si_unit  = base.si_unit,
+        to_si    = base.to_si,
+        symbol   = symbol,
+    ))
+    # Mark its CompoundUnit as labeled so division won't cancel
+    _TAGGED_LABELS[symbol] = tag
 
-    def parse_part(s: str) -> CompoundUnit:
-        if not s or s == "1":
-            return CompoundUnit.dimensionless()
-        cu = CompoundUnit.dimensionless()
-        for tok in s.replace("*", "·").split("·"):
-            tok = tok.strip()
-            if not tok or tok == "1":
-                continue
-            if "^" in tok:
-                sym, es = tok.split("^", 1)
-                exp = Fraction(es.strip("()")).limit_denominator(100)
-            else:
-                sym, exp = tok, Fraction(1)
-            sym = sym.strip()
-            get_unit(sym)   # validate
-            cu = cu * CompoundUnit({sym: exp})
-        return cu
 
-    result = parse_part(num_str)
-    if den_str:
-        result = result / parse_part(den_str)
-    return result
+_TAGGED_LABELS: dict[str, str] = {}   # symbol → tag
 
 
 def _make_unit(unit) -> CompoundUnit:
@@ -215,23 +194,206 @@ def _make_unit(unit) -> CompoundUnit:
     if isinstance(unit, CompoundUnit):
         return unit
     if isinstance(unit, str):
-        return CompoundUnit.from_symbol(unit) if unit in _REGISTRY else parse_unit(unit)
+        if unit in _REGISTRY:
+            sym = unit
+            cu  = CompoundUnit({sym: Fraction(1)},
+                               label=sym if sym in _TAGGED_LABELS else None)
+            return cu
+        return parse_unit(unit)
     raise TypeError(f"unit must be str or CompoundUnit, got {type(unit).__name__!r}")
 
 
-# ── Bootstrapped aliases (populated by units/__init__.py) ─────────────────────
+# ── 2a: Proper tokenizer / parser ────────────────────────────────────────────
+
+def _tokenize(expr: str) -> list[tuple[str, str]]:
+    """
+    Tokenize a unit expression into a list of (token_type, value) pairs.
+
+    Token types
+    -----------
+    SYM    — a unit symbol, e.g. "kg", "m", "s"
+    OP     — one of  ·  *  /  ^
+    LPAREN — (
+    RPAREN — )
+    INT    — integer literal
+    FRAC   — fraction literal "1/2" inside exponent parens
+    """
+    tokens = []
+    i, n = 0, len(expr)
+
+    while i < n:
+        c = expr[i]
+
+        if c in (' ', '\t'):
+            i += 1
+            continue
+
+        if c in ('·', '*'):
+            tokens.append(('OP', '*')); i += 1; continue
+
+        if c == '/':
+            tokens.append(('OP', '/')); i += 1; continue
+
+        if c == '^':
+            tokens.append(('OP', '^')); i += 1; continue
+
+        if c == '(':
+            tokens.append(('LPAREN', '(')); i += 1; continue
+
+        if c == ')':
+            tokens.append(('RPAREN', ')')); i += 1; continue
+
+        # Number (integer or sign)
+        if c.isdigit() or (c == '-' and i + 1 < n and expr[i+1].isdigit()):
+            j = i + 1
+            while j < n and expr[j].isdigit(): j += 1
+            tokens.append(('INT', expr[i:j])); i = j; continue
+
+        # Symbol: everything else up to a delimiter
+        j = i
+        while j < n and expr[j] not in ('·', '*', '/', '^', '(', ')', ' ', '\t'):
+            j += 1
+        if j == i:
+            raise UnitParseError(expr, f"unexpected character '{c}' at position {i}")
+        tokens.append(('SYM', expr[i:j])); i = j
+
+    return tokens
+
+
+def parse_unit(expr: str) -> CompoundUnit:
+    """
+    Parse a unit expression string into a CompoundUnit.
+
+    Supports
+    --------
+    · or * — multiplication
+    /       — division (chainable: kg/m/s = kg·m⁻¹·s⁻¹)
+    ^       — exponentiation with integer, negative integer, or p/q fraction
+    ()      — parentheses around exponents only
+
+    Examples
+    --------
+    "kg·m/s^2"         → kg¹ m¹ s⁻²
+    "kg/m^2/s"         → kg¹ m⁻² s⁻¹
+    "m^(1/2)"          → m^½
+    "m^-1"             → m⁻¹
+    "kg·m^(2/3)/s^2·K" → kg¹ m^(2/3) s⁻² K⁻¹   (K in denominator because
+                          the last · after s^2 is in the denominator context)
+    """
+    expr = expr.strip()
+    if not expr:
+        raise UnitParseError(expr, "empty expression")
+
+    tokens = _tokenize(expr)
+    pos    = [0]   # mutable pointer
+
+    def peek() -> tuple[str, str] | None:
+        return tokens[pos[0]] if pos[0] < len(tokens) else None
+
+    def consume(expected_type: str | None = None) -> tuple[str, str]:
+        tok = tokens[pos[0]]
+        if expected_type and tok[0] != expected_type:
+            raise UnitParseError(expr,
+                f"expected {expected_type} but got {tok[0]}='{tok[1]}'")
+        pos[0] += 1
+        return tok
+
+    def parse_exponent() -> Fraction:
+        """Parse the exponent after ^.  Handles  2  -1  (2/3)  (-1/2)."""
+        nxt = peek()
+        if nxt and nxt[0] == 'LPAREN':
+            consume('LPAREN')
+            # collect tokens until RPAREN
+            parts = []
+            while peek() and peek()[0] != 'RPAREN':
+                parts.append(consume())
+            consume('RPAREN')
+            # reassemble and evaluate as Fraction
+            inner = "".join(v for _, v in parts)
+            try:
+                return Fraction(inner).limit_denominator(1000)
+            except (ValueError, ZeroDivisionError):
+                raise UnitParseError(expr, f"invalid exponent '({inner})'")
+        elif nxt and nxt[0] == 'INT':
+            _, val = consume('INT')
+            # peek for /INT (fraction without parens, e.g. ^1/2 — rare but handle it)
+            if peek() and peek() == ('OP', '/'):
+                consume('OP')
+                _, den = consume('INT')
+                return Fraction(int(val), int(den))
+            return Fraction(int(val))
+        else:
+            raise UnitParseError(expr, "expected exponent after '^'")
+
+    def parse_factor() -> CompoundUnit:
+        """Parse a single symbol with optional exponent."""
+        tok = peek()
+        if tok is None:
+            raise UnitParseError(expr, "unexpected end of expression")
+
+        if tok[0] == 'SYM':
+            _, sym = consume('SYM')
+            get_unit(sym)   # validate — raises UnknownUnitError if missing
+            label = sym if sym in _TAGGED_LABELS else None
+            cu = CompoundUnit({sym: Fraction(1)}, label=label)
+            if peek() == ('OP', '^'):
+                consume('OP')
+                exp = parse_exponent()
+                cu  = CompoundUnit({sym: exp}, label=label)
+            return cu
+
+        if tok[0] == 'INT':
+            _, val = consume('INT')
+            if int(val) == 1:
+                return CompoundUnit.dimensionless()
+            raise UnitParseError(expr,
+                f"bare integer '{val}' not allowed; use '1' for dimensionless")
+
+        raise UnitParseError(expr, f"unexpected token {tok}")
+
+    def parse_expr() -> CompoundUnit:
+        """
+        Parse a full expression respecting left-to-right * and / with
+        equal precedence (standard unit expression convention).
+        """
+        result = parse_factor()
+
+        while True:
+            op = peek()
+            if op is None or op[0] not in ('OP',):
+                break
+            if op[1] == '*':
+                consume('OP')
+                result = result * parse_factor()
+            elif op[1] == '/':
+                consume('OP')
+                result = result / parse_factor()
+            elif op[1] in ('^',):
+                # ^ binds tighter and was already consumed in parse_factor
+                break
+            else:
+                break
+
+        return result
+
+    result = parse_expr()
+    if pos[0] != len(tokens):
+        leftover = "".join(v for _, v in tokens[pos[0]:])
+        raise UnitParseError(expr, f"unexpected trailing tokens: '{leftover}'")
+    return result
+
+
+# ── Bootstrapped aliases ──────────────────────────────────────────────────────
 
 _PENDING_ALIASES: list[tuple[str, str]] = [
     ("J",  "N·m"),
     ("W",  "J/s"),
     ("N",  "kg·m/s^2"),
     ("Pa", "N/m^2"),
-    ("Pa", "kg/m·s^2"),
     ("V",  "W/A"),
     ("Ω",  "V/A"),
     ("Hz", "1/s"),
 ]
-
 
 def _bootstrap_aliases() -> None:
     for display, expr in _PENDING_ALIASES:
