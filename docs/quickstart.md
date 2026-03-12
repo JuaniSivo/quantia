@@ -61,7 +61,7 @@ power_out3 = ms.from_dict(d)
 heights.to_csv("heights.csv")
 
 # ProbUnitArray — means + stds + CIs
-results = ms.QPA([power_out, efficiency])
+results = ms.QPA([power_out, power_in])
 results.to_csv("summary.csv", confidence=0.90)
 results.samples_to_csv("raw_samples.csv")
 ```
@@ -72,6 +72,6 @@ import mensura.math as mmath
 
 angle = ms.Q(45.0, "deg")
 mmath.sin(angle)              # dimensionless UnitFloat
-mmath.sqrt(ms.Q(4.0, "m^2")) # UnitFloat(2.0, 'm')
+mmath.sqrt(ms.Q(4.0, "m^2"))  # UnitFloat(2.0, 'm')
 mmath.log10(efficiency)       # works on ProbUnitFloat too
 ```
