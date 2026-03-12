@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "quantia"
+version = "0.1.0"
+requires-python = ">=3.11"
+description = "Unit-aware arithmetic with Monte Carlo uncertainty propagation"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [{ name = "Juan Ignacio Sivori" }]
+keywords = ["units", "dimensional analysis", "monte carlo", "uncertainty"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/JuaniSivo/quantia" # TODO
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
