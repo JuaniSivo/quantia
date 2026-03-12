@@ -1,12 +1,12 @@
 from __future__ import annotations
 import array as _array, math, operator, random
 from typing import Iterable
-from mensura._compound import CompoundUnit, _make_unit
-from mensura._scalar import UnitFloat
-from mensura._registry import get_unit, AffineUnit
-from mensura._exceptions import IncompatibleUnitsError
-from mensura.prob._distributions import icdf_uniform, icdf_normal, icdf_triangular, icdf_lognormal
-from mensura.prob._copula import _N_SAMPLES
+from quantia._compound import CompoundUnit, _make_unit
+from quantia._scalar import UnitFloat
+from quantia._registry import get_unit, AffineUnit
+from quantia._exceptions import IncompatibleUnitsError
+from quantia.prob._distributions import icdf_uniform, icdf_normal, icdf_triangular, icdf_lognormal
+from quantia.prob._copula import _N_SAMPLES
 
 
 class ProbUnitFloat:
@@ -249,5 +249,5 @@ class ProbUnitFloat:
 def _default_n(n: int | None) -> int:
     if n is not None:
         return n
-    from mensura._config import get_config
+    from quantia._config import get_config
     return get_config().n_samples

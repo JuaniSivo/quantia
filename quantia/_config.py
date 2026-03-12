@@ -1,11 +1,11 @@
 """
-mensura/_config.py
+quantia/_config.py
 ==================
 Thread-safe global configuration.
 
 Usage
 -----
-with mensura.config(n_samples=5000, seed=42):
+with quantia.config(n_samples=5000, seed=42):
     x = ProbUnitFloat.normal(10, 1, "m")   # uses n=5000
 """
 from __future__ import annotations
@@ -34,7 +34,7 @@ def get_config() -> _Config:
 @contextmanager
 def config(n_samples: int | None = None, seed: int | None = None):
     """
-    Context manager for temporary mensura configuration.
+    Context manager for temporary quantia configuration.
 
     Parameters
     ----------
@@ -45,7 +45,7 @@ def config(n_samples: int | None = None, seed: int | None = None):
 
     Example
     -------
-    with mensura.config(n_samples=5000, seed=42):
+    with quantia.config(n_samples=5000, seed=42):
         x = ProbUnitFloat.normal(10, 1, "m")
         y = ProbUnitFloat.uniform(0, 1, "s")
     # back to previous config here

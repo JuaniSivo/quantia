@@ -1,11 +1,11 @@
 from __future__ import annotations
 import array as _array, math, operator
 from typing import Iterable, Iterator
-from mensura._compound import CompoundUnit, _make_unit
-from mensura._array import UnitArray
-from mensura._scalar import UnitFloat
-from mensura.prob._scalar import ProbUnitFloat
-from mensura._exceptions import IncompatibleUnitsError
+from quantia._compound import CompoundUnit, _make_unit
+from quantia._array import UnitArray
+from quantia._scalar import UnitFloat
+from quantia.prob._scalar import ProbUnitFloat
+from quantia._exceptions import IncompatibleUnitsError
 
 
 class ProbUnitArray:

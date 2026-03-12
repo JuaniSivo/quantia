@@ -1,11 +1,11 @@
 """
-mensura/profiling/benchmark.py
+quantia/profiling/benchmark.py
 ==============================
-Profile mensura across three sample sizes: 1k, 10k, 100k.
+Profile quantia across three sample sizes: 1k, 10k, 100k.
 
 Run with:
-    python -m mensura.profiling.benchmark
-    python -m mensura.profiling.benchmark --profile   # cProfile detail
+    python -m quantia.profiling.benchmark
+    python -m quantia.profiling.benchmark --profile   # cProfile detail
 
 Measures wall time for each operation category so we know exactly
 where to focus Phase 4 optimizations.
@@ -51,47 +51,47 @@ def subsection(title: str, n: int):
 # ── Benchmark groups ─────────────────────────────────────────────────────────
 
 def bench_construction(n: int):
-    import mensura as ms
+    import quantia as qu
 
     subsection("Construction", n)
 
     with Timer("UnitFloat(5, 'km')", n):
         for _ in range(n):
-            ms.Q(5, "km")
+            qu.Q(5, "km")
 
     with Timer("UnitArray([...], 'km')  1k elements", n):
         vals = list(range(1000))
         for _ in range(max(1, n // 1000)):
-            ms.QA(vals, "km")
+            qu.QA(vals, "km")
 
     with Timer("ProbUnitFloat.uniform(0, 1, 'm')", n):
-        ms.ProbUnitFloat.uniform(0, 1, "m", n=n)
+        qu.ProbUnitFloat.uniform(0, 1, "m", n=n)
 
     with Timer("ProbUnitFloat.normal(10, 1, 'm')", n):
-        ms.ProbUnitFloat.normal(10, 1, "m", n=n)
+        qu.ProbUnitFloat.normal(10, 1, "m", n=n)
 
     with Timer("ProbUnitFloat.triangular(8,10,12,'m')", n):
-        ms.ProbUnitFloat.triangular(8, 10, 12, "m", n=n)
+        qu.ProbUnitFloat.triangular(8, 10, 12, "m", n=n)
 
     with Timer("ProbUnitFloat.lognormal(0, 0.1, 'm')", n):
-        ms.ProbUnitFloat.lognormal(0, 0.1, "m", n=n)
+        qu.ProbUnitFloat.lognormal(0, 0.1, "m", n=n)
 
     with Timer("CorrelatedSource(n_vars=3, rho=0.8)", n):
-        src = ms.CorrelatedSource(n_vars=3, rho=0.8, n=n)
+        src = qu.CorrelatedSource(n_vars=3, rho=0.8, n=n)
         src.draw(0, "normal", "m",  mean=10, std=1)
         src.draw(1, "normal", "s",  mean=2,  std=0.1)
         src.draw(2, "normal", "kg", mean=70, std=5)
 
 
 def bench_scalar_arithmetic(n: int):
-    import mensura as ms
+    import quantia as qu
 
     subsection("ProbUnitFloat arithmetic", n)
 
-    a = ms.ProbUnitFloat.uniform(8, 12, "m",  n=n)
-    b = ms.ProbUnitFloat.uniform(1, 3,  "s",  n=n)
-    c = ms.ProbUnitFloat.normal(70, 5,  "kg", n=n)
-    d = ms.ProbUnitFloat.uniform(1, 2,  "m",  n=n)
+    a = qu.ProbUnitFloat.uniform(8, 12, "m",  n=n)
+    b = qu.ProbUnitFloat.uniform(1, 3,  "s",  n=n)
+    c = qu.ProbUnitFloat.normal(70, 5,  "kg", n=n)
+    d = qu.ProbUnitFloat.uniform(1, 2,  "m",  n=n)
 
     with Timer("a + d  (compatible units)", n):
         _ = a + d
@@ -116,11 +116,11 @@ def bench_scalar_arithmetic(n: int):
 
 
 def bench_statistics(n: int):
-    import mensura as ms
+    import quantia as qu
 
     subsection("ProbUnitFloat statistics", n)
 
-    x = ms.ProbUnitFloat.normal(100, 10, "m", n=n)
+    x = qu.ProbUnitFloat.normal(100, 10, "m", n=n)
 
     with Timer("mean()", n):
         _ = x.mean()
@@ -141,17 +141,17 @@ def bench_statistics(n: int):
         _ = x.histogram(bins=20)
 
     with Timer("prob_lt(other ProbUnitFloat)", n):
-        y = ms.ProbUnitFloat.normal(105, 10, "m", n=n)
+        y = qu.ProbUnitFloat.normal(105, 10, "m", n=n)
         _ = x.prob_lt(y)
 
 
 def bench_conversion(n: int):
-    import mensura as ms
+    import quantia as qu
 
     subsection("Conversion", n)
 
-    x = ms.ProbUnitFloat.uniform(50, 150, "km", n=n)
-    uf = ms.Q(100, "km")
+    x = qu.ProbUnitFloat.uniform(50, 150, "km", n=n)
+    uf = qu.Q(100, "km")
 
     with Timer("ProbUnitFloat.to('m')", n):
         _ = x.to("m")
@@ -165,18 +165,18 @@ def bench_conversion(n: int):
 
 
 def bench_prob_array(n: int):
-    import mensura as ms
+    import quantia as qu
 
     k = 20   # number of elements in ProbUnitArray
 
     subsection(f"ProbUnitArray  (k={k} elements)", n)
 
-    elems = [ms.ProbUnitFloat.normal(float(i), 0.5, "m", n=n) for i in range(k)]
+    elems = [qu.ProbUnitFloat.normal(float(i), 0.5, "m", n=n) for i in range(k)]
 
     with Timer("ProbUnitArray construction", n):
-        arr = ms.ProbUnitArray(elems)
+        arr = qu.ProbUnitArray(elems)
 
-    arr = ms.ProbUnitArray(elems)   # pre-built for remaining tests
+    arr = qu.ProbUnitArray(elems)   # pre-built for remaining tests
 
     with Timer("arr.means()   → UnitArray", n):
         _ = arr.means()
@@ -187,15 +187,15 @@ def bench_prob_array(n: int):
     with Timer("arr.intervals(0.95)", n):
         _ = arr.intervals(0.95)
 
-    elems2 = [ms.ProbUnitFloat.normal(1.0, 0.1, "s", n=n) for _ in range(k)]
-    arr2   = ms.ProbUnitArray(elems2)
+    elems2 = [qu.ProbUnitFloat.normal(1.0, 0.1, "s", n=n) for _ in range(k)]
+    arr2   = qu.ProbUnitArray(elems2)
 
     with Timer("arr / arr2    (element-wise compound)", n):
         _ = arr / arr2
 
 
 def bench_parse(n: int):
-    import mensura as ms
+    import quantia as qu
 
     subsection("parse_unit  (called repeatedly)", n)
 
@@ -209,17 +209,17 @@ def bench_parse(n: int):
 
     with Timer(f"parse_unit × {n} calls (5 expressions)", n):
         for i in range(n):
-            ms.parse_unit(exprs[i % len(exprs)])
+            qu.parse_unit(exprs[i % len(exprs)])
 
 
 def bench_correlated_source(n: int):
-    import mensura as ms
+    import quantia as qu
 
     subsection("CorrelatedSource (Gaussian copula generation)", n)
 
     for k in (2, 5, 10):
         with Timer(f"gaussian_copula  k={k} vars", n):
-            src = ms.CorrelatedSource(n_vars=k, rho=0.7, n=n)
+            src = qu.CorrelatedSource(n_vars=k, rho=0.7, n=n)
             for i in range(k):
                 src.draw(i, "normal", "m", mean=10, std=1)
 
@@ -227,19 +227,19 @@ def bench_correlated_source(n: int):
 # ── Rs correlation (real-world petroleum example) ────────────────────────────
 
 def bench_rs_correlation(n: int):
-    import mensura as ms
-    import mensura.math as mmath
+    import quantia as qu
+    import quantia.math as mmath
 
     subsection("Rs correlation (petroleum, full pipeline)", n)
 
     a1, a2, a3, a4, a5 = 0.3818, -5.506, 2.902, 1.327, -0.7355
 
     SG_g = 0.65
-    Tsp  = ms.Q(10, "°C").to("°F")
-    Psp  = ms.Q(1, "atm").to("psi")
+    Tsp  = qu.Q(10, "°C").to("°F")
+    Psp  = qu.Q(1, "atm").to("psi")
 
     with Timer("SG_o = ProbUnitFloat.uniform(0.92, 0.96)", n):
-        SG_o = ms.ProbUnitFloat.uniform(0.92, 0.96, "1", n=n)
+        SG_o = qu.ProbUnitFloat.uniform(0.92, 0.96, "1", n=n)
 
     with Timer("log10(SG_o)", n):
         l_SGo = mmath.log10(SG_o)
@@ -283,16 +283,16 @@ def run_all(sizes=SAMPLE_SIZES):
 
 def run_cprofile(n: int = 10_000):
     """Detailed cProfile run at a single sample size."""
-    import mensura as ms
-    import mensura.math as mmath
+    import quantia as qu
+    import quantia.math as mmath
 
     pr = cProfile.Profile()
     pr.enable()
 
     # Run the most expensive operations
-    a = ms.ProbUnitFloat.normal(10, 1, "m", n=n)
-    b = ms.ProbUnitFloat.normal(2, 0.2, "s", n=n)
-    c = ms.ProbUnitFloat.normal(70, 5, "kg", n=n)
+    a = qu.ProbUnitFloat.normal(10, 1, "m", n=n)
+    b = qu.ProbUnitFloat.normal(2, 0.2, "s", n=n)
+    c = qu.ProbUnitFloat.normal(70, 5, "kg", n=n)
     speed   = a / b
     force   = c * (a / b)
     energy  = force * a
@@ -300,7 +300,7 @@ def run_cprofile(n: int = 10_000):
     _ = log_e.mean()
     _ = log_e.interval(0.95)
 
-    src = ms.CorrelatedSource(n_vars=3, rho=0.8, n=n)
+    src = qu.CorrelatedSource(n_vars=3, rho=0.8, n=n)
     x = src.draw(0, "normal", "m",  mean=10, std=1)
     y = src.draw(1, "normal", "s",  mean=2,  std=0.1)
     z = src.draw(2, "normal", "kg", mean=70, std=5)
@@ -315,7 +315,7 @@ def run_cprofile(n: int = 10_000):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="mensura benchmark")
+    parser = argparse.ArgumentParser(description="quantia benchmark")
     parser.add_argument("--profile", action="store_true",
                         help="Run cProfile detail at n=10k instead of wall-time benchmarks")
     parser.add_argument("--n", type=int, default=None,

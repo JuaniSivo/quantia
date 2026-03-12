@@ -1,4 +1,4 @@
-from mensura._exceptions import UnknownUnitError
+from quantia._exceptions import UnknownUnitError
 
 
 class Unit:

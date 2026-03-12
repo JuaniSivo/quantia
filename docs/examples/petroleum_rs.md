@@ -1,23 +1,23 @@
 # Worked Example: Solution GOR (Rs) Correlation
 
 The Standing correlation estimates solution gas-oil ratio from separator
-conditions.  mensura propagates the uncertainty in stock-tank oil
+conditions.  quantia propagates the uncertainty in stock-tank oil
 specific gravity through the full expression in one pass.
 ```python
-import mensura as ms
-import mensura.math as mmath
+import quantia as qu
+import quantia.math as mmath
 
 # ── Correlation constants (Standing 1947) ───────────────────────────────────
 a1, a2, a3, a4, a5 = 0.3818, -5.506, 2.902, 1.327, -0.7355
 
 # ── Known exact inputs ───────────────────────────────────────────────────────
 SG_g = 0.65                           # gas specific gravity (exact)
-Tsp  = ms.Q(10.0, "°C").to("°F")    # separator temperature
-Psp  = ms.Q(1.0, "atm").to("psi")   # separator pressure
+Tsp  = qu.Q(10.0, "°C").to("°F")    # separator temperature
+Psp  = qu.Q(1.0, "atm").to("psi")   # separator pressure
 
 # ── Uncertain input ──────────────────────────────────────────────────────────
-with ms.config(n_samples=5000, seed=42):
-    SG_o = ms.ProbUnitFloat.uniform(0.92, 0.96, "1")
+with qu.config(n_samples=5000, seed=42):
+    SG_o = qu.ProbUnitFloat.uniform(0.92, 0.96, "1")
 
 # ── Correlation ──────────────────────────────────────────────────────────────
 import math
@@ -35,5 +35,5 @@ lo, hi = Rst.interval(0.95)
 print(f"95% CI   : [{lo:.4g}, {hi:.4g}]")
 
 # ── Save ─────────────────────────────────────────────────────────────────────
-ms.save(Rst, "Rs_result.json")
+qu.save(Rst, "Rs_result.json")
 ```

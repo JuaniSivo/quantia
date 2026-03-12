@@ -1,9 +1,9 @@
 from __future__ import annotations
 import math
 import operator
-from mensura._compound import CompoundUnit, _make_unit
-from mensura._registry import get_unit, AffineUnit
-from mensura._exceptions import IncompatibleUnitsError, DimensionError
+from quantia._compound import CompoundUnit, _make_unit
+from quantia._registry import get_unit, AffineUnit
+from quantia._exceptions import IncompatibleUnitsError, DimensionError
 
 
 class UnitFloat:

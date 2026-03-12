@@ -1,5 +1,5 @@
-from mensura._registry import Unit, register
-from mensura._compound import register_tagged
+from quantia._registry import Unit, register
+from quantia._compound import register_tagged
 
 def _reg(sym, name, quantity, si_unit, to_si):
     register(sym, Unit(name, quantity, si_unit, float(to_si), sym))

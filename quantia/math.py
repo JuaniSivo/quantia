@@ -1,12 +1,12 @@
 """
-mensura/math.py
+quantia/math.py
 ===============
 Drop-in replacement for the stdlib math module that auto-dispatches
 on UnitFloat, UnitArray, ProbUnitFloat, and ProbUnitArray.
 
 Usage
 -----
-import mensura.math as mmath
+import quantia.math as mmath
 
 mmath.log10(x)   # works for float, UnitFloat, ProbUnitFloat, UnitArray, ProbUnitArray
 mmath.exp(x)
@@ -17,7 +17,7 @@ mmath.cos(x)
 mmath.tan(x)
 
 Falls through to stdlib math for plain int / float so existing code
-that does `import mensura.math as math` keeps working.
+that does `import quantia.math as math` keeps working.
 
 Design rules
 ------------
@@ -38,27 +38,27 @@ from fractions import Fraction
 # ── lazy imports to avoid circular deps ──────────────────────────────────────
 
 def _uf():
-    from mensura._scalar import UnitFloat
+    from quantia._scalar import UnitFloat
     return UnitFloat
 
 def _ua():
-    from mensura._array import UnitArray
+    from quantia._array import UnitArray
     return UnitArray
 
 def _puf():
-    from mensura.prob._scalar import ProbUnitFloat
+    from quantia.prob._scalar import ProbUnitFloat
     return ProbUnitFloat
 
 def _pua():
-    from mensura.prob._array import ProbUnitArray
+    from quantia.prob._array import ProbUnitArray
     return ProbUnitArray
 
 def _cu():
-    from mensura._compound import CompoundUnit
+    from quantia._compound import CompoundUnit
     return CompoundUnit
 
 def _make_unit(u):
-    from mensura._compound import _make_unit as _mu
+    from quantia._compound import _make_unit as _mu
     return _mu(u)
 
 
@@ -71,8 +71,8 @@ def _to_radians_value(uf) -> float:
     Extract a plain-float radian value from a UnitFloat.
     Raises DimensionError if the unit is not an angle.
     """
-    from mensura._exceptions import DimensionError
-    from mensura._registry import get_unit
+    from quantia._exceptions import DimensionError
+    from quantia._registry import get_unit
 
     cu = uf.unit
     # Accept dimensionless (plain radians passed as float-like UnitFloat)
@@ -137,7 +137,7 @@ def _make_func(
         if isinstance(x, UnitArray):
             if angle_check:
                 # convert every element to radians first
-                from mensura._registry import get_unit as _gu
+                from quantia._registry import get_unit as _gu
                 cu = x.unit
                 if len(cu._f) == 1:
                     sym, exp = next(iter(cu._f.items()))
@@ -153,7 +153,7 @@ def _make_func(
         # ── ProbUnitFloat ─────────────────────────────────────────────────────
         if isinstance(x, ProbUnitFloat):
             if angle_check:
-                from mensura._registry import get_unit as _gu
+                from quantia._registry import get_unit as _gu
                 cu = x._unit
                 if len(cu._f) == 1:
                     sym, exp = next(iter(cu._f.items()))
@@ -169,7 +169,7 @@ def _make_func(
         # ── ProbUnitArray ─────────────────────────────────────────────────────
         if isinstance(x, ProbUnitArray):
             if angle_check:
-                from mensura._registry import get_unit as _gu
+                from quantia._registry import get_unit as _gu
                 cu = x._unit
                 if len(cu._f) == 1:
                     sym, exp = next(iter(cu._f.items()))
@@ -183,13 +183,13 @@ def _make_func(
             return ProbUnitArray._from_flat(data, ru, x._len, x._n)
 
         raise TypeError(
-            f"mensura.math.{name}() does not support type "
+            f"quantia.math.{name}() does not support type "
             f"{type(x).__name__!r}. Expected float, UnitFloat, UnitArray, "
             f"ProbUnitFloat, or ProbUnitArray.")
 
     dispatch.__name__ = name
     dispatch.__doc__  = (
-        f"mensura-aware {name}(). Dispatches on float, UnitFloat, UnitArray, "
+        f"quantia-aware {name}(). Dispatches on float, UnitFloat, UnitArray, "
         f"ProbUnitFloat, ProbUnitArray. Falls through to math.{name} for plain numbers."
     )
     return dispatch
@@ -220,7 +220,7 @@ def cbrt(x):
 
 def pow(base, exp_val):
     """
-    mensura-aware pow(base, exp).
+    quantia-aware pow(base, exp).
     exp must be a plain int or float (not a UnitFloat).
     """
     if isinstance(exp_val, (int, float)):
@@ -235,7 +235,7 @@ def pow(base, exp_val):
 
 # Absolute value
 def fabs(x):
-    """mensura-aware fabs() — preserves unit."""
+    """quantia-aware fabs() — preserves unit."""
     return abs(x) if not isinstance(x, (int, float)) else _math.fabs(x)
 
 # Trig — validate angle unit on UnitFloat/UnitArray/Prob*
@@ -249,13 +249,13 @@ acos   = _make_func(_math.acos,   "rad", name="acos")
 atan   = _make_func(_math.atan,   "rad", name="atan")
 
 def atan2(y, x):
-    """mensura-aware atan2. Both args must be compatible units or plain floats."""
+    """quantia-aware atan2. Both args must be compatible units or plain floats."""
     UnitFloat = _uf()
     if isinstance(y, UnitFloat) and isinstance(x, UnitFloat):
         # units must be compatible; ratio is dimensionless
         yv = y.si_value()
         xv = x.si_value()
-        from mensura._scalar import UnitFloat as UF
+        from quantia._scalar import UnitFloat as UF
         return UF(_math.atan2(yv, xv), "rad")
     if isinstance(y, (int, float)) and isinstance(x, (int, float)):
         return _math.atan2(float(y), float(x))
@@ -271,15 +271,15 @@ atanh  = _make_func(_math.atanh,  None,  name="atanh")
 
 # Rounding — preserve unit
 def ceil(x):
-    """mensura-aware ceil — preserves unit."""
+    """quantia-aware ceil — preserves unit."""
     return _math.ceil(x)   # __ceil__ is defined on UnitFloat already
 
 def floor(x):
-    """mensura-aware floor — preserves unit."""
+    """quantia-aware floor — preserves unit."""
     return _math.floor(x)  # __floor__ is defined on UnitFloat already
 
 def round_(x, n=None):
-    """mensura-aware round — preserves unit. Named round_ to avoid shadowing builtin."""
+    """quantia-aware round — preserves unit. Named round_ to avoid shadowing builtin."""
     return builtins_round(x, n)
 
 import builtins as _builtins
@@ -317,7 +317,7 @@ remainder = _math.remainder
 # ── summary of what's available ───────────────────────────────────────────────
 
 __all__ = [
-    # mensura-aware (dispatch on all four types)
+    # quantia-aware (dispatch on all four types)
     "log", "log10", "log2",
     "exp", "exp2",
     "sqrt", "cbrt", "pow", "fabs",

@@ -1,8 +1,8 @@
 from __future__ import annotations
 import functools
 from fractions import Fraction
-from mensura._registry import _REGISTRY, get_unit, register, AffineUnit
-from mensura._exceptions import UnknownUnitError, IncompatibleUnitsError, UnitParseError, DimensionError
+from quantia._registry import _REGISTRY, get_unit, register, AffineUnit
+from quantia._exceptions import UnknownUnitError, IncompatibleUnitsError, UnitParseError, DimensionError
 
 
 # ── CompoundUnit ──────────────────────────────────────────────────────────────
@@ -180,7 +180,7 @@ def register_tagged(symbol: str, base_symbol: str, tag: str) -> None:
     Q(100, "Sm3_res") / Q(1, "Sm3_st")
     → UnitFloat(100.0, 'Sm3_res/Sm3_st')   # does not cancel to 1
     """
-    from mensura._registry import Unit
+    from quantia._registry import Unit
     base = get_unit(base_symbol)
     # Register a plain Unit with the same SI properties
     register(symbol, Unit(

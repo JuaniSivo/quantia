@@ -1,4 +1,4 @@
-from mensura._registry import Unit, register
+from quantia._registry import Unit, register
 
 def _reg(sym, name, quantity, si_unit, to_si):
     register(sym, Unit(name, quantity, si_unit, float(to_si), sym))

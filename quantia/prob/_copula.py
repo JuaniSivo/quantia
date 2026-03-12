@@ -1,7 +1,7 @@
 from __future__ import annotations
 import math, random
 import array as _array
-from mensura.prob._distributions import (
+from quantia.prob._distributions import (
     _norm_cdf, icdf_uniform, icdf_normal, icdf_triangular, icdf_lognormal
 )
 
@@ -70,7 +70,7 @@ class CorrelatedSource:
     }
 
     def __init__(self, n_vars=None, rho=None, corr_matrix=None, n=None):
-        from mensura.prob._scalar import _default_n
+        from quantia.prob._scalar import _default_n
         n = _default_n(n)
 
         if corr_matrix is not None:
@@ -91,13 +91,13 @@ class CorrelatedSource:
         if not isinstance(n, int) or n < 1:
             raise ValueError(f"n must be a positive integer, got {n!r}")
         
-        from mensura.prob._scalar import _default_n
+        from quantia.prob._scalar import _default_n
         self._n        = n
         self._uniforms = gaussian_copula(n, self._matrix)
         self._used: set[int] = set()
 
     def draw(self, slot: int, dist: str, unit, **params):
-        from mensura.prob._scalar import ProbUnitFloat
+        from quantia.prob._scalar import ProbUnitFloat
         if not isinstance(slot, int) or slot < 0 or slot >= self._k:
             raise IndexError(f"Slot {slot} out of range [0, {self._k-1}]")
         if slot in self._used:

@@ -1,17 +1,17 @@
-import mensura.units  # noqa: F401  — populates registry + aliases
+import quantia.units  # noqa: F401  — populates registry + aliases
 
-from mensura._scalar      import UnitFloat
-from mensura._array       import UnitArray
-from mensura.prob._scalar import ProbUnitFloat
-from mensura.prob._array  import ProbUnitArray
-from mensura.prob._copula import CorrelatedSource
-from mensura._exceptions  import (
+from quantia._scalar      import UnitFloat
+from quantia._array       import UnitArray
+from quantia.prob._scalar import ProbUnitFloat
+from quantia.prob._array  import ProbUnitArray
+from quantia.prob._copula import CorrelatedSource
+from quantia._exceptions  import (
     UnknownUnitError, IncompatibleUnitsError, DimensionError, UnitParseError
 )
-from mensura._compound    import parse_unit, register_alias, register_tagged
-from mensura._registry    import register, get_unit, registered_symbols
-from mensura._io          import save, load, from_dict
-from mensura._config      import config
+from quantia._compound    import parse_unit, register_alias, register_tagged
+from quantia._registry    import register, get_unit, registered_symbols
+from quantia._io          import save, load, from_dict
+from quantia._config      import config
 
 
 def Q(value: float, unit) -> UnitFloat:
