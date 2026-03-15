@@ -152,15 +152,38 @@ class ProbUnitFloat:
         tcu = _make_unit(target)
         src_affine = UnitFloat._is_single_affine(self._unit)
         tgt_affine = UnitFloat._is_single_affine(tcu)
-        if src_affine or tgt_affine:
-            if not (src_affine and tgt_affine):
-                raise DimensionError(
-                    f"Cannot mix affine unit '{self._unit}' with "
-                    f"non-affine unit '{tcu}' in .to().")
+
+        if src_affine and tgt_affine:
+            # Both affine: psig→psia, °C→K, etc. — sample-wise
             return ProbUnitFloat._from_raw(
-                _array.array('d', (tgt_affine.from_si_value(src_affine.to_si_value(v))
+                _array.array('d', (tgt_affine.from_si_value(
+                                    src_affine.to_si_value(v))
                                 for v in self._samples)),
                 tcu)
+
+        if src_affine:
+            # Affine → plain: psia→Pa, psig→kPa, etc.
+            si_unit_cu = _make_unit(src_affine.si_unit)
+            if not si_unit_cu.is_compatible(tcu):
+                raise IncompatibleUnitsError(self._unit, tcu)
+            factor = 1.0 / tcu.si_factor()
+            return ProbUnitFloat._from_raw(
+                _array.array('d', (src_affine.to_si_value(v) * factor
+                                for v in self._samples)),
+                tcu)
+
+        if tgt_affine:
+            # Plain → affine: Pa→psig, etc.
+            si_unit_cu = _make_unit(tgt_affine.si_unit)
+            if not self._unit.is_compatible(si_unit_cu):
+                raise IncompatibleUnitsError(self._unit, tcu)
+            factor = self._unit.si_factor()
+            return ProbUnitFloat._from_raw(
+                _array.array('d', (tgt_affine.from_si_value(v * factor)
+                                for v in self._samples)),
+                tcu)
+
+        # Both plain
         if not self._unit.is_compatible(tcu):
             raise IncompatibleUnitsError(self._unit, tcu)
         f = self._unit.si_factor() / tcu.si_factor()
