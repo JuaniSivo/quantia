@@ -65,11 +65,11 @@ class TestAreaUnits:
 
     def test_ha_to_m2(self):
         # NIST Table 8: 1 ha = 1.0 E+04 m² (exact)
-        assert qu.Q(1.0, "ha").to("m2").value == pytest.approx(1e4, rel=1e-10)
+        assert qu.Q(1.0, "ha").to("m^2").value == pytest.approx(1e4, rel=1e-10)
 
     def test_ha_to_km2(self):
         # 100 ha = 1 km²
-        assert qu.Q(100.0, "ha").to("km2").value == pytest.approx(1.0, rel=1e-10)
+        assert qu.Q(100.0, "ha").to("km^2").value == pytest.approx(1.0, rel=1e-10)
 
 
 class TestMassUnits:
