@@ -149,7 +149,10 @@ class TestNoDuplicates:
 
     def test_bar_value_nist(self):
         # NIST: 1 bar = 1.0 E+05 Pa (exact)
-        assert qu.Q(1.0, "bar").to("Pa").value == pytest.approx(100_000.0, rel=1e-10)
+        # "bar" is ambiguous — warns and redirects to "bara"
+        with pytest.warns(UserWarning, match="bara"):
+            val = qu.Q(1.0, "bar").to("Pa").value
+        assert val == pytest.approx(100_000.0, rel=1e-10)
 
     def test_mmHg_value_nist(self):
         # NIST: 1 mmHg = 1.333 224 E+02 Pa
