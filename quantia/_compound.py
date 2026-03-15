@@ -104,10 +104,27 @@ class CompoundUnit:
         return r
 
     def to_si_compound(self) -> "CompoundUnit":
+        """Convert this compound unit to its SI base unit representation.
+
+        Handles both simple si_unit strings (e.g. "m", "kg") and compound
+        si_unit strings (e.g. "m/s", "m3/s") by parsing them when needed.
+        Previously, compound si_unit strings were used as atomic keys, which
+        caused is_compatible() to fail for units like kn, mph, bbl/day.
+        """
         m: dict[str, Fraction] = {}
         for s, e in self._f.items():
-            si = get_unit(s).si_unit
-            m[si] = m.get(si, Fraction(0)) + e
+            si_str = get_unit(s).si_unit
+            # si_unit may be a compound expression like "m/s" or "m3/s".
+            # Parse it to get the actual base unit components.
+            # For simple units like "m" or "kg", parse_unit returns a single-
+            # factor CompoundUnit — behaviour is identical to before.
+            try:
+                si_cu = parse_unit(si_str)
+            except Exception:
+                # Fallback: treat as atomic symbol (e.g. dimensionless "1")
+                si_cu = CompoundUnit({si_str: Fraction(1)})
+            for si_sym, si_exp in si_cu._f.items():
+                m[si_sym] = m.get(si_sym, Fraction(0)) + si_exp * e
         return CompoundUnit(m)
 
     # ── Compatibility ─────────────────────────────────────────────────────────
