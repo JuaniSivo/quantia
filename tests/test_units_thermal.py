@@ -42,8 +42,9 @@ class TestImperialThermal:
 
     def test_BTU_IT_lb_to_J_kg(self):
         # NIST: 1 BTU_IT/lb = 2.326 E+03 J/kg (exact)
-        assert qu.Q(1.0, "BTU_IT/lb").to("J/kg_K").value == pytest.approx(
-               2.326e3, rel=1e-6)
+        # BTU_IT/lb is specific energy (J/kg), not specific heat (J/(kg·K))
+        assert qu.Q(1.0, "BTU_IT/lb").to("J/kg").value == pytest.approx(
+            2.326e3, rel=1e-6)
 
     def test_BTU_IT_lb_F_to_J_kg_K(self):
         # NIST: 1 BTU_IT/(lb·°F) = 4.1868 E+03 J/(kg·K)
