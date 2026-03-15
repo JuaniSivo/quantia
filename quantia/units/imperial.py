@@ -32,6 +32,24 @@ _reg("lbf", "pound-force", "force", "N", 4.4482216152605)
 _reg("psi", "pound per square inch", "pressure", "Pa", 6_894.757293168)
 # NIST: 6.894 757 E+03 Pa
 
+# ── Gauge / Absolute pressure ─────────────────────────────────────────────────
+# psia: absolute — offset=0, scale = psi factor. Same numeric result as plain
+#       multiplicative unit but uses AffineUnit for interface consistency with psig.
+# psig: gauge — P_abs(Pa) = P_gauge(psi) * scale + 1 atm
+#       1 atm = 101 325 Pa (exact, NIST)
+# "psi" alone warns and redirects to psia via _AMBIGUOUS_UNITS in _registry.py
+
+from quantia._registry import AffineUnit
+register("psia", AffineUnit(
+    "pound per square inch (absolute)", "pressure", "Pa",
+    scale=6_894.757293168, offset=0.0, symbol="psia"))
+# NIST: 1 psi = 6.894 757 E+03 Pa
+
+register("psig", AffineUnit(
+    "pound per square inch (gauge)", "pressure", "Pa",
+    scale=6_894.757293168, offset=101_325.0, symbol="psig"))
+# Gauge: P_abs = P_g * 6894.757 + 101325  (standard atmosphere offset)
+
 # ── Energy ───────────────────────────────────────────────────────────────────
 # BTU has two common thermodynamic definitions.
 # "BTU" alone triggers a UserWarning and redirects to BTU_IT via _AMBIGUOUS_UNITS.
