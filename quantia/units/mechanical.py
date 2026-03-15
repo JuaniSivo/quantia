@@ -47,23 +47,23 @@ register_tagged("N_m_torque", "m",  "torque")
 # Imperial torque — plain Units (convert to N·m numerically)
 _reg("lbf_ft", "pound-force foot",  "torque", "N_m_torque", 1.355_818)
 # NIST: 1 lbf·ft = 1.355 818 E+00 N·m
-_reg("lbf_in", "pound-force inch",  "torque", "N_m_torque", 1.129_848e-1)
-# NIST: 1 lbf·in = 1.129 848 E-01 N·m
+_reg("lbf_in", "pound-force inch", "torque", "N_m_torque", 1.355_818 / 12)
+# Exact: 1 lbf·in = 1/12 lbf·ft (by definition)
 _reg("kgf_m",  "kilogram-force metre","torque","N_m_torque", 9.806_65)
 # NIST: 1 kgf·m = 9.806 65 E+00 N·m
 _reg("ozf_in", "ounce-force inch",  "torque", "N_m_torque", 7.061_552e-3)
 # NIST: 1 ozf·in = 7.061 552 E-03 N·m
 
 # ── Permeability ──────────────────────────────────────────────────────────────
-_reg("D",   "darcy",      "permeability", "m2", 9.869_233e-13)
+_reg("D",   "darcy",      "permeability", "m^2", 9.869_233e-13)
 # NIST conversion tables (Permeability): 1 darcy = 9.869 233 E-13 m²
 # Definition: 1 D = flow of 1 cP fluid through 1 cm² cross-section
 #             with 1 atm/cm pressure gradient at 1 cm³/s
-_reg("mD",  "millidarcy", "permeability", "m2", 9.869_233e-16)
+_reg("mD",  "millidarcy", "permeability", "m^2", 9.869_233e-16)
 # 1 mD = 1e-3 D = 9.869 233 E-16 m²
-_reg("µD",  "microdarcy", "permeability", "m2", 9.869_233e-19)
+_reg("µD",  "microdarcy", "permeability", "m^2", 9.869_233e-19)
 # 1 µD = 1e-6 D — tight/unconventional reservoirs
-_reg("uD",  "microdarcy", "permeability", "m2", 9.869_233e-19)
+_reg("uD",  "microdarcy", "permeability", "m^2", 9.869_233e-19)
 # ASCII fallback for µD
 
 # ── Dynamic viscosity ─────────────────────────────────────────────────────────
@@ -78,11 +78,11 @@ _reg("mPa_s","millipascal second","dynamic_viscosity","Pa_s",1e-3)
 # 1 mPa·s = 1 cP exactly — SI-preferred form
 
 # ── Kinematic viscosity ───────────────────────────────────────────────────────
-_reg("m2/s", "square metre per second", "kinematic_viscosity", "m2/s", 1.0)
+_reg("m2/s", "square metre per second", "kinematic_viscosity", "m^2/s", 1.0)
 # SI coherent derived unit
-_reg("cSt",  "centistokes",    "kinematic_viscosity", "m2/s", 1e-6)
+_reg("cSt",  "centistokes",    "kinematic_viscosity", "m^2/s", 1e-6)
 # NIST: 1 cSt = 1.0 E-06 m²/s (exact)
-_reg("St",   "stokes",         "kinematic_viscosity", "m2/s", 1e-4)
+_reg("St",   "stokes",         "kinematic_viscosity", "m^2/s", 1e-4)
 # NIST: 1 St = 1.0 E-04 m²/s (exact — CGS unit)
-_reg("ft2/s","square foot per second","kinematic_viscosity","m2/s", 9.290_304e-2)
+_reg("ft2/s","square foot per second","kinematic_viscosity","m^2/s", 9.290_304e-2)
 # NIST: 9.290 304 E-02 m²/s

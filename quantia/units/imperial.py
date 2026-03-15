@@ -32,10 +32,10 @@ _reg("gr",       "grain",          "mass",    "kg",  6.479_891e-5)
 # NIST: 6.479 891 E-05 kg
 _reg("slug",     "slug",           "mass",    "kg",  1.459_390e1)
 # NIST: 1.459 390 E+01 kg
-_reg("ton_long", "long ton (2240 lb)", "mass","kg",  1.016_047e3)
-# NIST: 1.016 047 E+03 kg
-_reg("ton_short","short ton (2000 lb)","mass","kg",  9.071_847e2)
-# NIST: 9.071 847 E+02 kg
+_reg("ton_long", "long ton (2240 lb)",   "mass",     "kg", 0.45359237 * 2240)
+# Exact: 1 long ton = 2240 lb (by definition)
+_reg("ton_short","short ton (2000 lb)",  "mass",     "kg", 0.45359237 * 2000)
+# Exact: 1 short ton = 2000 lb (by definition)
 
 # ── Force ─────────────────────────────────────────────────────────────────────
 _reg("lbf",  "pound-force",       "force",    "N",   4.4482216152605)
@@ -44,10 +44,10 @@ _reg("dyn",  "dyne",              "force",    "N",   1e-5)
 # NIST: 1 dyn = 1.0 E-05 N (exact)
 _reg("kgf",  "kilogram-force",    "force",    "N",   9.806_65)
 # NIST: 9.806 65 E+00 N (exact — gn by definition)
-_reg("kip",  "kip (1000 lbf)",   "force",     "N",   4.448_222e3)
-# NIST: 4.448 222 E+03 N
-_reg("ozf",  "ounce-force",       "force",    "N",   2.780_139e-1)
-# NIST: 2.780 139 E-01 N
+_reg("kip",      "kip (1000 lbf)",       "force",    "N",  4.4482216152605 * 1000)
+# Exact: 1 kip = 1000 lbf (by definition)
+_reg("ozf",      "ounce-force",          "force",    "N",  4.4482216152605 / 16)
+# Exact: 1 ozf = 1/16 lbf (by definition)
 _reg("pdl",  "poundal",           "force",    "N",   1.382_550e-1)
 # NIST: 1.382 550 E-01 N
 
@@ -57,8 +57,8 @@ _reg("pdl",  "poundal",           "force",    "N",   1.382_550e-1)
 # "atm", "bar", "mmHg" are intentionally absent — defined in common.py.
 _reg("psi",   "pound per square inch",          "pressure", "Pa", 6_894.757293168)
 # NIST: 6.894 757 E+03 Pa
-_reg("ksi",   "kip per square inch",            "pressure", "Pa", 6.894_757e6)
-# NIST: 6.894 757 E+06 Pa
+_reg("ksi",      "kip per square inch",  "pressure", "Pa", 6_894.757293168 * 1000)
+# Exact: 1 ksi = 1000 psi — use same base factor as psia for consistency
 _reg("torr",  "torr",                           "pressure", "Pa", 1.333_224e2)
 # NIST: 1.333 224 E+02 Pa
 _reg("inHg",  "inch of mercury (conventional)", "pressure", "Pa", 3.386_389e3)
@@ -136,33 +136,33 @@ _reg("kn",  "knot", "speed", "m/s", 1852 / 3600)
 # Previous value 0.514444 was truncated; 1852/3600 = 0.51444... recurring
 
 # ── Volume ────────────────────────────────────────────────────────────────────
-_reg("gal",   "US gallon",         "volume",  "m3",  3.785_411_784e-3)
+_reg("gal",   "US gallon",         "volume",  "m^3",  3.785_411_784e-3)
 # NIST: 3.785 412 E-03 m3
-_reg("qt",    "US quart",          "volume",  "m3",  9.463_529_5e-4)
+_reg("qt",    "US quart",          "volume",  "m^3",  9.463_529_5e-4)
 # NIST: 9.463 529 E-04 m3
-_reg("ft3",   "cubic foot",        "volume",  "m3",  2.831_685e-2)
+_reg("ft3",   "cubic foot",        "volume",  "m^3",  2.831_685e-2)
 # NIST: 2.831 685 E-02 m³
-_reg("in3",   "cubic inch",        "volume",  "m3",  1.638_706e-5)
+_reg("in3",   "cubic inch",        "volume",  "m^3",  1.638_706e-5)
 # NIST: 1.638 706 E-05 m³
-_reg("yd3",   "cubic yard",        "volume",  "m3",  7.645_549e-1)
+_reg("yd3",   "cubic yard",        "volume",  "m^3",  7.645_549e-1)
 # NIST: 7.645 549 E-01 m³
-_reg("fl_oz", "fluid ounce (US)",  "volume",  "m3",  2.957_353e-5)
+_reg("fl_oz", "fluid ounce (US)",  "volume",  "m^3",  2.957_353e-5)
 # NIST: 2.957 353 E-05 m³
-_reg("gal_imp","Imperial gallon",  "volume",  "m3",  4.546_09e-3)
+_reg("gal_imp","Imperial gallon",  "volume",  "m^3",  4.546_09e-3)
 # NIST: 4.546 09 E-03 m³ (Canadian and UK)
-_reg("pt",    "pint (US liquid)",  "volume",  "m3",  4.731_765e-4)
+_reg("pt",    "pint (US liquid)",  "volume",  "m^3",  4.731_765e-4)
 # NIST: 4.731 765 E-04 m³
 
 # ── Area ─────────────────────────────────────────────────────────────────────
-_reg("ft2",  "square foot",       "area",     "m2",  9.290_304e-2)
+_reg("ft2",  "square foot",       "area",     "m^2",  9.290_304e-2)
 # NIST: 9.290 304 E-02 m² (exact — derived from ft definition)
-_reg("in2",  "square inch",       "area",     "m2",  6.4516e-4)
+_reg("in2",  "square inch",       "area",     "m^2",  6.4516e-4)
 # NIST: 6.4516 E-04 m² (exact)
-_reg("yd2",  "square yard",       "area",     "m2",  8.361_274e-1)
+_reg("yd2",  "square yard",       "area",     "m^2",  8.361_274e-1)
 # NIST: 8.361 274 E-01 m²
-_reg("mi2",  "square mile",       "area",     "m2",  2.589_988e6)
+_reg("mi2",  "square mile",       "area",     "m^2",  2.589_988e6)
 # NIST: 2.589 988 E+06 m²
-_reg("acre", "acre",              "area",     "m2",  4.046_873e3)
+_reg("acre", "acre",              "area",     "m^2",  4.046_873e3)
 # NIST: 4.046 873 E+03 m²
 
 # ── Velocity additions ────────────────────────────────────────────────────────
