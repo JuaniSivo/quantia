@@ -29,7 +29,7 @@ class TestPermeability:
 
     def test_darcy_to_m2(self):
         # NIST: 1 D = 9.869 233 E-13 m²
-        assert qu.Q(1.0, "D").to("m2").value == pytest.approx(9.869_233e-13, rel=1e-6)
+        assert qu.Q(1.0, "D").to("m^2").value == pytest.approx(9.869_233e-13, rel=1e-6)
 
     def test_mD_to_D(self):
         # 1 mD = 1e-3 D (exact)
@@ -40,12 +40,12 @@ class TestPermeability:
         assert qu.Q(1000.0, "uD").to("mD").value == pytest.approx(1.0, rel=1e-9)
 
     def test_µD_uD_equivalent(self):
-        assert qu.Q(1.0, "µD").to("m2").value == pytest.approx(
-               qu.Q(1.0, "uD").to("m2").value, rel=1e-10)
+        assert qu.Q(1.0, "µD").to("m^2").value == pytest.approx(
+               qu.Q(1.0, "uD").to("m^2").value, rel=1e-10)
 
     def test_mD_to_m2(self):
         # 1 mD = 9.869 233 E-16 m²
-        assert qu.Q(1.0, "mD").to("m2").value == pytest.approx(9.869_233e-16, rel=1e-6)
+        assert qu.Q(1.0, "mD").to("m^2").value == pytest.approx(9.869_233e-16, rel=1e-6)
 
 
 class TestDynamicViscosity:
