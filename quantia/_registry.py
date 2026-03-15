@@ -37,7 +37,8 @@ class AffineUnit(Unit):
     Conversion from SI: value    = (si_value - offset) / scale
 
     Used for temperature (°C, °F) and gauge pressure (psig, barg).
-    K is also AffineUnit for uniformity (scale=1, offset=0).
+    K and psia are also AffineUnit for interface uniformity
+    (scale=their_factor, offset=0).
     """
     __slots__ = ("name", "quantity", "si_unit", "to_si", "symbol", "offset")
 
@@ -50,11 +51,17 @@ class AffineUnit(Unit):
     def scale(self) -> float:
         return self.to_si
 
-    def to_kelvin(self, value: float) -> float:
+    def to_si_value(self, value: float) -> float:
+        """Convert a value in this unit to its SI base unit."""
         return value * self.scale + self.offset
 
-    def from_kelvin(self, kelvin: float) -> float:
-        return (kelvin - self.offset) / self.scale
+    def from_si_value(self, si_val: float) -> float:
+        """Convert a value in SI base units back to this unit."""
+        return (si_val - self.offset) / self.scale
+
+    # Backward-compatible aliases — do not remove
+    def to_kelvin(self, value: float) -> float:      return self.to_si_value(value)
+    def from_kelvin(self, kelvin: float) -> float:   return self.from_si_value(kelvin)
 
     def __repr__(self):
         return (f"AffineUnit('{self.symbol}', scale={self.scale}, "
@@ -78,6 +85,12 @@ _AMBIGUOUS_UNITS: dict[str, tuple[str, str]] = {
     "kcal": ("kcal_th",
              "Ambiguous: 'kcal' treated as 'kcal_th' (thermochemical). "
              "Use 'kcal_th' or 'kcal_IT' explicitly."),
+    "psi":  ("psia",
+             "Ambiguous: 'psi' treated as 'psia' (absolute). "
+             "Use 'psia' or 'psig' explicitly."),
+    "bar":  ("bara",
+             "Ambiguous: 'bar' treated as 'bara' (absolute). "
+             "Use 'bara' or 'barg' explicitly."),
 }
 
 
