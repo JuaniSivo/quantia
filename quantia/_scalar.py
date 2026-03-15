@@ -36,29 +36,33 @@ class UnitFloat:
             if isinstance(u, AffineUnit) and exp == 1:   # ← remove `u.offset != 0.0`
                 return u
         return None
-
+    
     def to_si(self) -> "UnitFloat":
         affine = self._is_single_affine(self._unit)
         if affine:
-            return UnitFloat(affine.to_kelvin(self._value), "K")
+            # Use affine.si_unit (e.g. "K" for temperature, "Pa" for pressure)
+            # rather than hardcoding "K" — works for any AffineUnit
+            return UnitFloat(affine.to_si_value(self._value), affine.si_unit)
         return UnitFloat(self._value * self._unit.si_factor(),
-                         self._unit.to_si_compound())
+                        self._unit.to_si_compound())
 
     def si_value(self) -> float:
         return self.to_si()._value
-
+    
     def to(self, target) -> "UnitFloat":
         tcu = _make_unit(target)
-        # Temperature path — single affine on both sides
         src_affine = self._is_single_affine(self._unit)
         tgt_affine = self._is_single_affine(tcu)
         if src_affine or tgt_affine:
             if not (src_affine and tgt_affine):
                 raise DimensionError(
-                    "Cannot mix temperature and non-temperature units in .to()")
-            k = src_affine.to_kelvin(self._value)
-            return UnitFloat(tgt_affine.from_kelvin(k), target)
-        # General path
+                    f"Cannot mix affine unit '{self._unit}' with "
+                    f"non-affine unit '{tcu}' in .to(). "
+                    "Both sides must be affine (e.g. both temperature or "
+                    "both pressure absolute/gauge).")
+            si_val = src_affine.to_si_value(self._value)
+            return UnitFloat(tgt_affine.from_si_value(si_val), target)
+        # General multiplicative path
         if not self._unit.is_compatible(tcu):
             raise IncompatibleUnitsError(self._unit, tcu)
         return UnitFloat(
