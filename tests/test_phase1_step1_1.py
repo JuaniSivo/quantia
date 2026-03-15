@@ -41,11 +41,10 @@ class TestCorrectedFactors:
 
     def test_knot_exact_nist(self):
         # NIST: 1 kn = 1852 m / 3600 s exactly (international nautical mile)
-        result = qu.Q(1.0, "kn").to("m/s").value
-        assert result == pytest.approx(1852 / 3600, rel=1e-10)
+        assert qu.Q(1.0, "kn").to("m/s").value == pytest.approx(1852 / 3600, rel=1e-10)
 
     def test_knot_not_truncated(self):
-        # Old value 0.514444 differed from exact in the 7th significant figure
+        # Old value 0.514444 was truncated; 1852/3600 = 0.514444... recurring
         result = qu.Q(1.0, "kn").to("m/s").value
         assert result != pytest.approx(0.514444, rel=1e-7)
 
@@ -164,3 +163,41 @@ class TestNoDuplicates:
         # this test catches the case where the module fails to import due to the
         # duplicate guard raising during startup
         assert _REGISTRY["atm"].to_si == pytest.approx(101_325.0, rel=1e-10)
+
+
+class TestCompoundSiUnitBugFix:
+    """
+    Regression tests for the to_si_compound() bug where units registered
+    with a compound si_unit string (e.g. "m/s", "m3/s") were incompatible
+    with their parsed equivalents.
+
+    This affected: kn, mph, bbl/day, m3/day, Mscf/day, and any future
+    unit registered with a compound si_unit string.
+    """
+
+    def test_kn_compatible_with_parsed_m_per_s(self):
+        from quantia._compound import parse_unit
+        kn_cu  = parse_unit("kn")
+        mps_cu = parse_unit("m/s")
+        assert kn_cu.is_compatible(mps_cu)
+
+    def test_mph_compatible_with_parsed_m_per_s(self):
+        from quantia._compound import parse_unit
+        assert parse_unit("mph").is_compatible(parse_unit("m/s"))
+
+    def test_bbl_day_compatible_with_m3_per_s(self):
+        from quantia._compound import parse_unit
+        assert parse_unit("bbl/day").is_compatible(parse_unit("m3/s"))
+
+    def test_kn_to_mph_round_trip(self):
+        # Cross-unit speed conversion — both go through SI base
+        result = qu.Q(1.0, "kn").to("mph").value
+        # 1 kn = 1852/3600 m/s; 1 mph = 0.44704 m/s
+        expected = (1852 / 3600) / 0.44704
+        assert result == pytest.approx(expected, rel=1e-9)
+
+    def test_flow_rate_conversion(self):
+        # bbl/day → m3/s — previously raised IncompatibleUnitsError
+        result = qu.Q(1.0, "bbl/day").to("m3/s").value
+        expected = 0.158987294928 / 86_400
+        assert result == pytest.approx(expected, rel=1e-6)
