@@ -1,3 +1,5 @@
+import math
+
 from quantia._registry import Unit, AffineUnit, register, _REGISTRY
 
 
@@ -6,9 +8,9 @@ def _reg(sym, name, quantity, si_unit, to_si):
 
 
 # ── Volume ────────────────────────────────────────────────────────────────────
-_reg("L",  "litre",      "volume", "m3", 1e-3)
-_reg("mL", "millilitre", "volume", "m3", 1e-6)
-_reg("cL", "centilitre", "volume", "m3", 1e-5)
+_reg("L",  "litre",      "volume", "m^3", 1e-3)
+_reg("mL", "millilitre", "volume", "m^3", 1e-6)
+_reg("cL", "centilitre", "volume", "m^3", 1e-5)
 # NIST Table 8: 1 L = 1 dm3 = 10^-3 m3 (exact)
 
 # ── Pressure — canonical home for non-gauge, non-SI pressure units ────────────
@@ -50,19 +52,19 @@ _reg("yr",   "year (365 days)",  "time",  "s",   31_536_000.0)
 # Direction: _REGISTRY["°"] = existing "deg" entry.
 _REGISTRY["°"] = _REGISTRY["deg"]    # alias — deg already in si.py
 
-_reg("′",    "arcminute",        "angle", "rad", 2.908_882e-4)
+_reg("′",    "arcminute",        "angle", "rad", math.pi / 10_800)
 # NIST: 1′ = (1/60)° = π/10 800 rad = 2.908 882 E-04 rad
 
-_reg("″",    "arcsecond",        "angle", "rad", 4.848_137e-6)
+_reg("″",    "arcsecond",        "angle", "rad", math.pi / 648_000)
 # NIST: 1″ = (1/60)′ = π/648 000 rad = 4.848 137 E-06 rad
 
-_reg("arcmin", "arcminute",      "angle", "rad", 2.908_882e-4)
+_reg("arcmin", "arcminute",      "angle", "rad", math.pi / 10_800)
 # ASCII alias for ′
-_reg("arcsec", "arcsecond",      "angle", "rad", 4.848_137e-6)
+_reg("arcsec", "arcsecond",      "angle", "rad", math.pi / 648_000)
 # ASCII alias for ″
 
 # Area (NIST Table 8)
-_reg("ha",   "hectare",          "area",  "m2",  1e4)
+_reg("ha",   "hectare",          "area",  "m^2",  1e4)
 # NIST Table 8: 1 ha = 1 hm² = 10⁴ m² (exact)
 
 # Mass (NIST Table 8)

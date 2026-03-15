@@ -136,33 +136,33 @@ _reg("kn",  "knot", "speed", "m/s", 1852 / 3600)
 # Previous value 0.514444 was truncated; 1852/3600 = 0.51444... recurring
 
 # ── Volume ────────────────────────────────────────────────────────────────────
-_reg("gal",   "US gallon",         "volume",  "m3",  3.785_411_784e-3)
+_reg("gal",   "US gallon",         "volume",  "m^3",  3.785_411_784e-3)
 # NIST: 3.785 412 E-03 m3
-_reg("qt",    "US quart",          "volume",  "m3",  9.463_529_5e-4)
+_reg("qt",    "US quart",          "volume",  "m^3",  9.463_529_5e-4)
 # NIST: 9.463 529 E-04 m3
-_reg("ft3",   "cubic foot",        "volume",  "m3",  2.831_685e-2)
+_reg("ft3",   "cubic foot",        "volume",  "m^3",  2.831_685e-2)
 # NIST: 2.831 685 E-02 m³
-_reg("in3",   "cubic inch",        "volume",  "m3",  1.638_706e-5)
+_reg("in3",   "cubic inch",        "volume",  "m^3",  1.638_706e-5)
 # NIST: 1.638 706 E-05 m³
-_reg("yd3",   "cubic yard",        "volume",  "m3",  7.645_549e-1)
+_reg("yd3",   "cubic yard",        "volume",  "m^3",  7.645_549e-1)
 # NIST: 7.645 549 E-01 m³
-_reg("fl_oz", "fluid ounce (US)",  "volume",  "m3",  2.957_353e-5)
+_reg("fl_oz", "fluid ounce (US)",  "volume",  "m^3",  2.957_353e-5)
 # NIST: 2.957 353 E-05 m³
-_reg("gal_imp","Imperial gallon",  "volume",  "m3",  4.546_09e-3)
+_reg("gal_imp","Imperial gallon",  "volume",  "m^3",  4.546_09e-3)
 # NIST: 4.546 09 E-03 m³ (Canadian and UK)
-_reg("pt",    "pint (US liquid)",  "volume",  "m3",  4.731_765e-4)
+_reg("pt",    "pint (US liquid)",  "volume",  "m^3",  4.731_765e-4)
 # NIST: 4.731 765 E-04 m³
 
 # ── Area ─────────────────────────────────────────────────────────────────────
-_reg("ft2",  "square foot",       "area",     "m2",  9.290_304e-2)
+_reg("ft2",  "square foot",       "area",     "m^2",  9.290_304e-2)
 # NIST: 9.290 304 E-02 m² (exact — derived from ft definition)
-_reg("in2",  "square inch",       "area",     "m2",  6.4516e-4)
+_reg("in2",  "square inch",       "area",     "m^2",  6.4516e-4)
 # NIST: 6.4516 E-04 m² (exact)
-_reg("yd2",  "square yard",       "area",     "m2",  8.361_274e-1)
+_reg("yd2",  "square yard",       "area",     "m^2",  8.361_274e-1)
 # NIST: 8.361 274 E-01 m²
-_reg("mi2",  "square mile",       "area",     "m2",  2.589_988e6)
+_reg("mi2",  "square mile",       "area",     "m^2",  2.589_988e6)
 # NIST: 2.589 988 E+06 m²
-_reg("acre", "acre",              "area",     "m2",  4.046_873e3)
+_reg("acre", "acre",              "area",     "m^2",  4.046_873e3)
 # NIST: 4.046 873 E+03 m²
 
 # ── Velocity additions ────────────────────────────────────────────────────────
