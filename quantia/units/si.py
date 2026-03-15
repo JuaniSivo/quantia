@@ -68,3 +68,95 @@ _reg("deg", "degree",         "angle",       "rad",3.141592653589793/180)
 _reg("Hz",  "hertz",          "frequency",   "Hz", 1.0)
 _reg("kHz", "kilohertz",      "frequency",   "Hz", 1_000.0)
 _reg("MHz", "megahertz",      "frequency",   "Hz", 1_000_000.0)
+
+_reg("sr",  "steradian",   "solid_angle",          "sr",   1.0)
+# NIST Table 4: sr = m²/m² = 1 (dimensionless but named)
+
+_reg("C",   "coulomb",     "electric_charge",      "C",    1.0)
+# NIST Table 4: C = A·s
+
+_reg("S",   "siemens",     "electric_conductance", "S",    1.0)
+# NIST Table 4: S = A/V = kg⁻¹·m⁻²·s³·A²
+
+_reg("Wb",  "weber",       "magnetic_flux",        "Wb",   1.0)
+# NIST Table 4: Wb = V·s = kg·m²·s⁻²·A⁻¹
+
+_reg("T",   "tesla",       "magnetic_flux_density","T",    1.0)
+# NIST Table 4: T = Wb/m² = kg·s⁻²·A⁻¹
+
+_reg("lm",  "lumen",       "luminous_flux",        "lm",   1.0)
+# NIST Table 4: lm = cd·sr
+
+_reg("lx",  "lux",         "illuminance",          "lx",   1.0)
+# NIST Table 4: lx = lm/m² = cd·sr·m⁻²
+
+_reg("Bq",  "becquerel",   "radioactivity",        "Hz",   1.0)
+# NIST Table 4: Bq = s⁻¹ (same SI dimension as Hz but distinct quantity)
+
+_reg("Gy",  "gray",        "absorbed_dose",        "Gy",   1.0)
+# NIST Table 4: Gy = J/kg = m²·s⁻²
+
+_reg("Sv",  "sievert",     "dose_equivalent",      "Sv",   1.0)
+# NIST Table 4: Sv = J/kg = m²·s⁻² (same dimension as Gy, distinct quantity)
+
+_reg("kat", "katal",       "catalytic_activity",   "kat",  1.0)
+# NIST Table 4: kat = mol·s⁻¹
+
+# ── Additional prefixed SI variants (engineering-common) ─────────────────────
+
+# Frequency
+_reg("GHz", "gigahertz",   "frequency",  "Hz", 1e9)
+_reg("THz", "terahertz",   "frequency",  "Hz", 1e12)
+
+# Force
+_reg("MN",  "meganewton",  "force",      "N",  1e6)
+_reg("mN",  "millinewton", "force",      "N",  1e-3)
+_reg("µN",  "micronewton", "force",      "N",  1e-6)
+_reg("uN",  "micronewton", "force",      "N",  1e-6)   # ASCII fallback
+
+# Energy
+_reg("GJ",  "gigajoule",   "energy",     "J",  1e9)
+
+# Power
+_reg("GW",  "gigawatt",    "power",      "W",  1e9)
+_reg("mW",  "milliwatt",   "power",      "W",  1e-3)
+_reg("µW",  "microwatt",   "power",      "W",  1e-6)
+_reg("uW",  "microwatt",   "power",      "W",  1e-6)   # ASCII fallback
+
+# Pressure / Stress
+_reg("GPa", "gigapascal",  "pressure",   "Pa", 1e9)
+_reg("µPa", "micropascal", "pressure",   "Pa", 1e-6)   # acoustics
+_reg("uPa", "micropascal", "pressure",   "Pa", 1e-6)   # ASCII fallback
+
+# Current
+_reg("µA",  "microampere", "current",    "A",  1e-6)
+_reg("uA",  "microampere", "current",    "A",  1e-6)   # ASCII fallback
+_reg("nA",  "nanoampere",  "current",    "A",  1e-9)
+
+# Voltage
+_reg("µV",  "microvolt",   "voltage",    "V",  1e-6)
+_reg("uV",  "microvolt",   "voltage",    "V",  1e-6)   # ASCII fallback
+_reg("nV",  "nanovolt",    "voltage",    "V",  1e-9)
+
+# Resistance
+_reg("MΩ",  "megaohm",     "resistance", "Ω",  1e6)
+_reg("GΩ",  "gigaohm",     "resistance", "Ω",  1e9)
+
+# Capacitance
+_reg("mF",  "millifarad",  "capacitance","F",  1e-3)
+_reg("µF",  "microfarad",  "capacitance","F",  1e-6)
+_reg("uF",  "microfarad",  "capacitance","F",  1e-6)   # ASCII fallback
+_reg("nF",  "nanofarad",   "capacitance","F",  1e-9)
+_reg("pF",  "picofarad",   "capacitance","F",  1e-12)
+
+# Inductance
+_reg("mH",  "millihenry",  "inductance", "H",  1e-3)
+_reg("µH",  "microhenry",  "inductance", "H",  1e-6)
+_reg("uH",  "microhenry",  "inductance", "H",  1e-6)   # ASCII fallback
+_reg("nH",  "nanohenry",   "inductance", "H",  1e-9)
+
+# Amount
+_reg("mmol","millimole",   "amount",     "mol",1e-3)
+_reg("µmol","micromole",   "amount",     "mol",1e-6)
+_reg("umol","micromole",   "amount",     "mol",1e-6)   # ASCII fallback
+_reg("nmol","nanomole",    "amount",     "mol",1e-9)
