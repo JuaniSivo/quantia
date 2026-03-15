@@ -47,8 +47,8 @@ register_tagged("N_m_torque", "m",  "torque")
 # Imperial torque — plain Units (convert to N·m numerically)
 _reg("lbf_ft", "pound-force foot",  "torque", "N_m_torque", 1.355_818)
 # NIST: 1 lbf·ft = 1.355 818 E+00 N·m
-_reg("lbf_in", "pound-force inch",  "torque", "N_m_torque", 1.129_848e-1)
-# NIST: 1 lbf·in = 1.129 848 E-01 N·m
+_reg("lbf_in", "pound-force inch", "torque", "N_m_torque", 1.355_818 / 12)
+# Exact: 1 lbf·in = 1/12 lbf·ft (by definition)
 _reg("kgf_m",  "kilogram-force metre","torque","N_m_torque", 9.806_65)
 # NIST: 1 kgf·m = 9.806 65 E+00 N·m
 _reg("ozf_in", "ounce-force inch",  "torque", "N_m_torque", 7.061_552e-3)
