@@ -229,8 +229,8 @@ class TestTemperatureUnaffected:
 class TestErrors:
 
     def test_mixing_affine_and_non_affine_raises(self):
-        from quantia import DimensionError
-        with pytest.raises(DimensionError):
+        from quantia import IncompatibleUnitsError
+        with pytest.raises(IncompatibleUnitsError):
             qu.Q(100.0, "psig").to("m")
 
     def test_incompatible_pressure_and_length(self):
