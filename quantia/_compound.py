@@ -216,20 +216,44 @@ _TAGGED_LABELS: dict[str, str] = {}   # symbol → tag
 _UNIT_CACHE: dict[str, CompoundUnit] = {}
 
 def _make_unit(unit) -> CompoundUnit:
-    """Coerce a str or CompoundUnit to CompoundUnit. Registry lookups are cached."""
+    """Coerce a str or CompoundUnit to CompoundUnit.
+
+    Ambiguous units (psi, bar, BTU, cal, kcal) are NOT cached — they must
+    call get_unit() on every use so the UserWarning fires each time.
+    Non-ambiguous registry lookups are cached for performance.
+    """
     if isinstance(unit, CompoundUnit):
         return unit
     if isinstance(unit, str):
-        cached = _UNIT_CACHE.get(unit)
-        if cached is not None:
-            return cached
-        if unit in _REGISTRY:
-            cu = CompoundUnit({unit: Fraction(1)},
-                              label=unit if unit in _TAGGED_LABELS else None)
-        else:
+        from quantia._registry import _AMBIGUOUS_UNITS
+        is_ambiguous = unit in _AMBIGUOUS_UNITS
+
+        # Only use cache for non-ambiguous units
+        if not is_ambiguous:
+            cached = _UNIT_CACHE.get(unit)
+            if cached is not None:
+                return cached
+
+        # Try registry first — get_unit() fires warnings for ambiguous symbols
+        # and returns the redirected canonical unit
+        try:
+            u = get_unit(unit)          # may warn + redirect (e.g. psi → psia)
+            actual_sym = u.symbol       # use the canonical symbol after redirect
+        except UnknownUnitError:
+            # Not a bare registry symbol — parse as compound expression
             cu = parse_unit(unit)
-        _UNIT_CACHE[unit] = cu
+            if not is_ambiguous:
+                _UNIT_CACHE[unit] = cu
+            return cu
+
+        label = actual_sym if actual_sym in _TAGGED_LABELS else None
+        cu = CompoundUnit({actual_sym: Fraction(1)}, label=label)
+
+        # Cache non-ambiguous units only
+        if not is_ambiguous:
+            _UNIT_CACHE[unit] = cu
         return cu
+
     raise TypeError(f"unit must be str or CompoundUnit, got {type(unit).__name__!r}")
 
 

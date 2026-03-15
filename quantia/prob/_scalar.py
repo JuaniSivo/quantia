@@ -4,7 +4,7 @@ from typing import Iterable
 from quantia._compound import CompoundUnit, _make_unit
 from quantia._scalar import UnitFloat
 from quantia._registry import get_unit, AffineUnit
-from quantia._exceptions import IncompatibleUnitsError
+from quantia._exceptions import IncompatibleUnitsError, DimensionError
 from quantia.prob._distributions import icdf_uniform, icdf_normal, icdf_triangular, icdf_lognormal
 from quantia.prob._copula import _N_SAMPLES
 
@@ -135,20 +135,60 @@ class ProbUnitFloat:
     # ── Conversion ────────────────────────────────────────────────────────────
 
     def to_si(self):
-        if len(self._unit._f)==1:
-            s,e=next(iter(self._unit._f.items())); u=get_unit(s)
-            if isinstance(u, AffineUnit) and u.offset!=0 and e==1:
+        if len(self._unit._f) == 1:
+            s, e = next(iter(self._unit._f.items()))
+            u = get_unit(s)
+            if isinstance(u, AffineUnit) and e == 1:
+                # Covers all AffineUnit: temperature (°C→K) and pressure (psig→Pa)
                 return ProbUnitFloat._from_raw(
-                    _array.array('d',(u.to_kelvin(v) for v in self._samples)),"K")
-        f=self._unit.si_factor()
+                    _array.array('d', (u.to_si_value(v) for v in self._samples)),
+                    u.si_unit)
+        f = self._unit.si_factor()
         return ProbUnitFloat._from_raw(
-            _array.array('d',(v*f for v in self._samples)),self._unit.to_si_compound())
+            _array.array('d', (v * f for v in self._samples)),
+            self._unit.to_si_compound())
 
     def to(self, target):
-        tcu=_make_unit(target)
-        if not self._unit.is_compatible(tcu): raise IncompatibleUnitsError(self._unit,tcu)
-        f=self._unit.si_factor()/tcu.si_factor()
-        return ProbUnitFloat._from_raw(_array.array('d',(v*f for v in self._samples)),tcu)
+        tcu = _make_unit(target)
+        src_affine = UnitFloat._is_single_affine(self._unit)
+        tgt_affine = UnitFloat._is_single_affine(tcu)
+
+        if src_affine and tgt_affine:
+            # Both affine: psig→psia, °C→K, etc. — sample-wise
+            return ProbUnitFloat._from_raw(
+                _array.array('d', (tgt_affine.from_si_value(
+                                    src_affine.to_si_value(v))
+                                for v in self._samples)),
+                tcu)
+
+        if src_affine:
+            # Affine → plain: psia→Pa, psig→kPa, etc.
+            si_unit_cu = _make_unit(src_affine.si_unit)
+            if not si_unit_cu.is_compatible(tcu):
+                raise IncompatibleUnitsError(self._unit, tcu)
+            factor = 1.0 / tcu.si_factor()
+            return ProbUnitFloat._from_raw(
+                _array.array('d', (src_affine.to_si_value(v) * factor
+                                for v in self._samples)),
+                tcu)
+
+        if tgt_affine:
+            # Plain → affine: Pa→psig, etc.
+            si_unit_cu = _make_unit(tgt_affine.si_unit)
+            if not self._unit.is_compatible(si_unit_cu):
+                raise IncompatibleUnitsError(self._unit, tcu)
+            factor = self._unit.si_factor()
+            return ProbUnitFloat._from_raw(
+                _array.array('d', (tgt_affine.from_si_value(v * factor)
+                                for v in self._samples)),
+                tcu)
+
+        # Both plain
+        if not self._unit.is_compatible(tcu):
+            raise IncompatibleUnitsError(self._unit, tcu)
+        f = self._unit.si_factor() / tcu.si_factor()
+        return ProbUnitFloat._from_raw(
+            _array.array('d', (v * f for v in self._samples)), tcu)
 
     # ── Arithmetic ────────────────────────────────────────────────────────────
 

@@ -1,4 +1,4 @@
-from quantia._registry import Unit, register
+from quantia._registry import Unit, AffineUnit, register
 
 
 def _reg(sym, name, quantity, si_unit, to_si):
@@ -19,3 +19,19 @@ _reg("bar",  "bar",                      "pressure", "Pa", 100_000.0)
 # NIST: 1.0 E+05 Pa (exact)
 _reg("mmHg", "millimetre of mercury (conventional)", "pressure", "Pa", 133.322387415)
 # NIST: 1.333 224 E+02 Pa
+
+# ── Gauge / Absolute pressure ─────────────────────────────────────────────────
+# bara: absolute bar — offset=0, numerically identical to "bar".
+# barg: gauge bar  — P_abs(Pa) = P_g(bar) * 100000 + 101325
+# "bar" alone warns and redirects to bara via _AMBIGUOUS_UNITS in _registry.py
+
+from quantia._registry import AffineUnit
+register("bara", AffineUnit(
+    "bar (absolute)", "pressure", "Pa",
+    scale=100_000.0, offset=0.0, symbol="bara"))
+# NIST: 1 bar = 1.0 E+05 Pa (exact)
+
+register("barg", AffineUnit(
+    "bar (gauge)", "pressure", "Pa",
+    scale=100_000.0, offset=101_325.0, symbol="barg"))
+# Gauge: P_abs = P_g * 100000 + 101325  (standard atmosphere offset)
