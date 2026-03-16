@@ -31,9 +31,9 @@ class TestVolume:
         assert qu.Q(1.0, "MMbbl").to("Mbbl").value == pytest.approx(1000.0, rel=1e-9)
 
     def test_scf_to_m3(self):
-        # 1 scf = 1 ft³ = 2.831 685 E-02 m³ (NIST)
+        # 1 scf = 1 ft³ = 0.3048³ m³ (exact)
         assert qu.Q(1.0, "scf").to("m3").value == pytest.approx(
-            2.831_685e-2, rel=1e-6)
+            0.3048**3, rel=1e-6)
 
     def test_scf_to_ft3(self):
         # 1 scf = 1 ft³ — exact identity, same registration value
@@ -125,7 +125,7 @@ class TestFlowRate:
 
     def test_Mscf_day_to_m3_s(self):
         assert qu.Q(1.0, "Mscf/day").to("m3/s").value == pytest.approx(
-               28.3168466 / 86_400, rel=1e-9)
+               0.3048**3 * 1_000 / 86_400, rel=1e-9)
 
     def test_MMscf_day_to_Mscf_day(self):
         assert qu.Q(1.0, "MMscf/day").to("Mscf/day").value == pytest.approx(
@@ -188,11 +188,11 @@ class TestTaggedUnits:
 
     def test_Mscf_res_si_factor(self):
         from quantia._registry import get_unit
-        assert get_unit("Mscf_res").to_si == pytest.approx(28.3168466, rel=1e-9)
+        assert get_unit("Mscf_res").to_si == pytest.approx(0.3048**3 * 1000, rel=1e-9)
 
     def test_Mscf_st_si_factor(self):
         from quantia._registry import get_unit
-        assert get_unit("Mscf_st").to_si == pytest.approx(28.3168466, rel=1e-9)
+        assert get_unit("Mscf_st").to_si == pytest.approx(0.3048**3 * 1000, rel=1e-9)
 
     def test_STB_does_not_cancel_with_RB(self):
         # RB/STB is FVF — must not collapse to dimensionless
@@ -227,7 +227,7 @@ class TestTaggedUnits:
         oil = qu.Q(1.0,    "STB")
         gor = gas / oil
 
-        expected = 1000.0 * 0.0283168466 / 0.158987294928
+        expected = 1000.0 * 0.3048**3 / 0.158987294928
         assert gor.si_value() == pytest.approx(expected, rel=1e-6)
 
     def test_FVF_RB_per_STB(self):

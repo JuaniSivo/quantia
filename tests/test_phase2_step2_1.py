@@ -93,11 +93,11 @@ class TestScfTaggedSIFactors:
 
     def test_scf_res_si_factor(self):
         from quantia._registry import get_unit
-        assert get_unit("scf_res").to_si == pytest.approx(0.0283168466, rel=1e-9)
+        assert get_unit("scf_res").to_si == pytest.approx(0.3048**3, rel=1e-9)
 
     def test_scf_st_si_factor(self):
         from quantia._registry import get_unit
-        assert get_unit("scf_st").to_si == pytest.approx(0.0283168466, rel=1e-9)
+        assert get_unit("scf_st").to_si == pytest.approx(0.3048**3, rel=1e-9)
 
     def test_gor_scf_STB_to_Sm3_Sm3(self):
         """
@@ -112,8 +112,8 @@ class TestScfTaggedSIFactors:
         gor_scf = gas / oil             # scf_res/scf_st
 
         # Convert to Sm3_res/Sm3_st by building target ratio
-        gas_sm3 = qu.Q(1000.0 * 0.0283168466, "Sm3_res")
-        oil_sm3 = qu.Q(1.0    * 0.0283168466, "Sm3_st")
+        gas_sm3 = qu.Q(1000.0 * 0.3048**3, "Sm3_res")
+        oil_sm3 = qu.Q(1.0    * 0.3048**3, "Sm3_st")
         gor_sm3 = gas_sm3 / oil_sm3
 
         assert gor_scf.si_value() == pytest.approx(gor_sm3.si_value(), rel=1e-9)
