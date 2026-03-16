@@ -30,14 +30,12 @@ _reg("Mbbl",   "thousand barrels", "volume", "m^3", 158.987294928)
 _reg("MMbbl",  "million barrels",  "volume", "m^3", 158_987.294928)
 
 # Gas volume at standard conditions
-_reg("scf",    "standard cubic foot",        "gas_volume", "m^3", 0.0283168466)
-# 1 scf = 1 ft³ at standard conditions
-_reg("Mscf",   "thousand standard cu ft",    "gas_volume", "m^3", 28.3168466)
-_reg("MMscf",  "million standard cu ft",     "gas_volume", "m^3", 28_316.8466)
-_reg("Bscf",   "billion standard cu ft",     "gas_volume", "m^3", 28_316_846.6)
-# 1 Bscf = 1e9 scf (exact)
-_reg("Tscf",   "trillion standard cu ft",    "gas_volume", "m^3", 2.83168466e10)
-# 1 Tscf = 1e12 scf (exact)
+_reg("scf",   "standard cubic foot",     "gas_volume", "m^3", 2.831_685e-2)
+# Exact: 1 scf = 1 ft³ — use identical value to ft3 in imperial.py
+_reg("Mscf",  "thousand standard cu ft", "gas_volume", "m^3", 2.831_685e-2 * 1_000)
+_reg("MMscf", "million standard cu ft",  "gas_volume", "m^3", 2.831_685e-2 * 1_000_000)
+_reg("Bscf",  "billion standard cu ft",  "gas_volume", "m^3", 2.831_685e-2 * 1e9)
+_reg("Tscf",  "trillion standard cu ft", "gas_volume", "m^3", 2.831_685e-2 * 1e12)
 
 # Metric gas volume
 _reg("MMm3",   "million cubic metres",       "volume",     "m^3", 1e6)
@@ -77,12 +75,9 @@ _reg("m3/h",       "cubic metres per hour",        "flow_rate", "m^3/s",
      1.0            / 3_600)
 # 1 m³/h = 1/3600 m³/s
 
-_reg("Mscf/day",   "thousand scf per day",         "flow_rate", "m^3/s",
-     28.3168466     / 86_400)
-_reg("MMscf/day",  "million scf per day",           "flow_rate", "m^3/s",
-     28_316.8466    / 86_400)
-_reg("Bscf/day",   "billion scf per day",           "flow_rate", "m^3/s",
-     28_316_846.6   / 86_400)
+_reg("Mscf/day",  "thousand scf per day",  "flow_rate", "m^3/s", 2.831_685e-2 * 1_000 / 86_400)
+_reg("MMscf/day", "million scf per day",   "flow_rate", "m^3/s", 2.831_685e-2 * 1e6   / 86_400)
+_reg("Bscf/day",  "billion scf per day",   "flow_rate", "m^3/s", 2.831_685e-2 * 1e9   / 86_400)
 
 _reg("bbl/h",      "barrels per hour",             "flow_rate", "m^3/s",
      0.158987294928 / 3_600)
