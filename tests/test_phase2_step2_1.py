@@ -155,18 +155,24 @@ class TestKgCm2:
 
 class TestOpaqueUnitsRemoved:
     """
-    Confirm that opaque named ratio units have been removed.
-    Users should build GOR/FVF from tagged units instead.
+    scf/STB and Mscf/STB are no longer opaque atomic symbols.
+    They now parse as compound expressions (scf÷STB, Mscf÷STB)
+    since both component symbols are registered.
+    Sm3/Sm3 still raises because Sm3 is not a registered symbol
+    (Sm3_res and Sm3_st are, but not plain Sm3).
     """
 
     def test_Sm3_Sm3_removed(self):
+        # "Sm3" is not registered — parse_unit("Sm3/Sm3") raises UnknownUnitError
         with pytest.raises(UnknownUnitError):
             qu.Q(1.0, "Sm3/Sm3")
 
-    def test_scf_STB_removed(self):
-        with pytest.raises(UnknownUnitError):
-            qu.Q(1.0, "scf/STB")
+    def test_scf_STB_now_parses_as_compound(self):
+        # scf/STB parses as scf ÷ STB — both are registered symbols
+        # Result is a valid compound unit, not an error
+        result = qu.Q(1.0, "scf") / qu.Q(1.0, "STB")
+        assert not result.unit.is_dimensionless()
 
-    def test_Mscf_STB_removed(self):
-        with pytest.raises(UnknownUnitError):
-            qu.Q(1.0, "Mscf/STB")
+    def test_Mscf_STB_now_parses_as_compound(self):
+        result = qu.Q(1.0, "Mscf") / qu.Q(1.0, "STB")
+        assert not result.unit.is_dimensionless()

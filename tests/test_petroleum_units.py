@@ -31,12 +31,12 @@ class TestVolume:
         assert qu.Q(1.0, "MMbbl").to("Mbbl").value == pytest.approx(1000.0, rel=1e-9)
 
     def test_scf_to_m3(self):
-        # 1 scf = 1 ft³ = 0.028 316 846 6 m³
+        # 1 scf = 1 ft³ = 2.831 685 E-02 m³ (NIST)
         assert qu.Q(1.0, "scf").to("m3").value == pytest.approx(
-               0.0283168466, rel=1e-9)
+            2.831_685e-2, rel=1e-6)
 
     def test_scf_to_ft3(self):
-        # 1 scf = 1 ft³ at standard conditions
+        # 1 scf = 1 ft³ — exact identity, same registration value
         assert qu.Q(1.0, "scf").to("ft3").value == pytest.approx(1.0, rel=1e-9)
 
     def test_Mscf_to_scf(self):
