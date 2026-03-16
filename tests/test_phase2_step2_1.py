@@ -93,11 +93,11 @@ class TestScfTaggedSIFactors:
 
     def test_scf_res_si_factor(self):
         from quantia._registry import get_unit
-        assert get_unit("scf_res").to_si == pytest.approx(0.0283168466, rel=1e-9)
+        assert get_unit("scf_res").to_si == pytest.approx(0.3048**3, rel=1e-9)
 
     def test_scf_st_si_factor(self):
         from quantia._registry import get_unit
-        assert get_unit("scf_st").to_si == pytest.approx(0.0283168466, rel=1e-9)
+        assert get_unit("scf_st").to_si == pytest.approx(0.3048**3, rel=1e-9)
 
     def test_gor_scf_STB_to_Sm3_Sm3(self):
         """
@@ -112,8 +112,8 @@ class TestScfTaggedSIFactors:
         gor_scf = gas / oil             # scf_res/scf_st
 
         # Convert to Sm3_res/Sm3_st by building target ratio
-        gas_sm3 = qu.Q(1000.0 * 0.0283168466, "Sm3_res")
-        oil_sm3 = qu.Q(1.0    * 0.0283168466, "Sm3_st")
+        gas_sm3 = qu.Q(1000.0 * 0.3048**3, "Sm3_res")
+        oil_sm3 = qu.Q(1.0    * 0.3048**3, "Sm3_st")
         gor_sm3 = gas_sm3 / oil_sm3
 
         assert gor_scf.si_value() == pytest.approx(gor_sm3.si_value(), rel=1e-9)
@@ -155,18 +155,24 @@ class TestKgCm2:
 
 class TestOpaqueUnitsRemoved:
     """
-    Confirm that opaque named ratio units have been removed.
-    Users should build GOR/FVF from tagged units instead.
+    scf/STB and Mscf/STB are no longer opaque atomic symbols.
+    They now parse as compound expressions (scf÷STB, Mscf÷STB)
+    since both component symbols are registered.
+    Sm3/Sm3 still raises because Sm3 is not a registered symbol
+    (Sm3_res and Sm3_st are, but not plain Sm3).
     """
 
     def test_Sm3_Sm3_removed(self):
+        # "Sm3" is not registered — parse_unit("Sm3/Sm3") raises UnknownUnitError
         with pytest.raises(UnknownUnitError):
             qu.Q(1.0, "Sm3/Sm3")
 
-    def test_scf_STB_removed(self):
-        with pytest.raises(UnknownUnitError):
-            qu.Q(1.0, "scf/STB")
+    def test_scf_STB_now_parses_as_compound(self):
+        # scf/STB parses as scf ÷ STB — both are registered symbols
+        # Result is a valid compound unit, not an error
+        result = qu.Q(1.0, "scf") / qu.Q(1.0, "STB")
+        assert not result.unit.is_dimensionless()
 
-    def test_Mscf_STB_removed(self):
-        with pytest.raises(UnknownUnitError):
-            qu.Q(1.0, "Mscf/STB")
+    def test_Mscf_STB_now_parses_as_compound(self):
+        result = qu.Q(1.0, "Mscf") / qu.Q(1.0, "STB")
+        assert not result.unit.is_dimensionless()

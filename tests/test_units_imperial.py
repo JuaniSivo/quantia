@@ -60,7 +60,7 @@ class TestVolume:
 
     def test_ft3_to_m3(self):
         # NIST: 2.831 685 E-02 m³
-        assert qu.Q(1.0, "ft^3").to("m^3").value == pytest.approx(2.831_685e-2, rel=1e-6)
+        assert qu.Q(1.0, "ft^3").to("m^3").value == pytest.approx(0.3048**3, rel=1e-6)
 
     def test_in3_to_m3(self):
         # NIST: 1.638 706 E-05 m³

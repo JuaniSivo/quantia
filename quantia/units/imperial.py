@@ -140,8 +140,8 @@ _reg("gal",   "US gallon",         "volume",  "m^3",  3.785_411_784e-3)
 # NIST: 3.785 412 E-03 m3
 _reg("qt",    "US quart",          "volume",  "m^3",  9.463_529_5e-4)
 # NIST: 9.463 529 E-04 m3
-_reg("ft3",   "cubic foot",        "volume",  "m^3",  2.831_685e-2)
-# NIST: 2.831 685 E-02 m³
+_reg("ft3",   "cubic foot",        "volume",  "m^3",  0.3048**3)
+# Exact: 1 ft = 0.3048 m (exact) → 1 ft³ = 0.3048³ m³
 _reg("in3",   "cubic inch",        "volume",  "m^3",  1.638_706e-5)
 # NIST: 1.638 706 E-05 m³
 _reg("yd3",   "cubic yard",        "volume",  "m^3",  7.645_549e-1)
