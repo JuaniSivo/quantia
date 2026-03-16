@@ -84,8 +84,8 @@ register("°API", Unit("API gravity", "api_gravity", "1", 1.0, "°API"))
 # quantities that preserve petroleum meaning through calculations.
 
 # Reservoir and stock-tank cubic metres
-register_tagged("Sm3_res", "m^3",  "reservoir")
-register_tagged("Sm3_st",  "m^3",  "stock_tank")
+register_tagged("Sm3_res", "m3",  "reservoir")
+register_tagged("Sm3_st",  "m3",  "stock_tank")
 
 # Reservoir and stock-tank standard cubic feet
 # Base is "scf" (not "m3") so SI factors are correct for scf/STB GOR
