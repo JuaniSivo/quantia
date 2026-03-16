@@ -26,23 +26,23 @@ def _reg(sym, name, quantity, si_unit, to_si):
 
 
 # ── Volume ────────────────────────────────────────────────────────────────────
-_reg("bbl",   "barrel",           "volume", "m3", 0.158987294928)
+_reg("bbl",   "barrel",           "volume", "m^3", 0.158987294928)
 # API MPMS Ch.11: 1 bbl = 42 US gal = 0.158 987 294 928 m³ (exact)
 
-_reg("Mbbl",  "thousand barrels", "volume", "m3", 158.987294928)
+_reg("Mbbl",  "thousand barrels", "volume", "m^3", 158.987294928)
 # 1 Mbbl = 1000 bbl (exact)
 
-_reg("MMbbl", "million barrels",  "volume", "m3", 158_987.294928)
+_reg("MMbbl", "million barrels",  "volume", "m^3", 158_987.294928)
 # 1 MMbbl = 1e6 bbl (exact)
 
 # Gas volume at standard conditions
-_reg("scf",   "standard cubic foot",     "gas_volume", "m3", 0.0283168466)
+_reg("scf",   "standard cubic foot",     "gas_volume", "m^3", 0.0283168466)
 # 1 scf = 1 ft³ at standard conditions = 0.028 316 846 6 m³
 
-_reg("Mscf",  "thousand standard cu ft", "gas_volume", "m3", 28.3168466)
+_reg("Mscf",  "thousand standard cu ft", "gas_volume", "m^3", 28.3168466)
 # 1 Mscf = 1000 scf (exact)
 
-_reg("MMscf", "million standard cu ft",  "gas_volume", "m3", 28_316.8466)
+_reg("MMscf", "million standard cu ft",  "gas_volume", "m^3", 28_316.8466)
 # 1 MMscf = 1e6 scf (exact)
 
 # ── Pressure ──────────────────────────────────────────────────────────────────
@@ -63,13 +63,13 @@ _reg("kg/cm2",  "kilogram-force per square centimetre", "pressure", "Pa", 9.806_
 _reg("kgf/cm2", "kilogram-force per square centimetre", "pressure", "Pa", 9.806_65e4)
 
 # ── Flow rate ─────────────────────────────────────────────────────────────────
-_reg("bbl/day",   "barrels per day",          "flow_rate", "m3/s",
+_reg("bbl/day",   "barrels per day",          "flow_rate", "m^3/s",
      0.158987294928 / 86_400)
-_reg("Mbbl/day",  "thousand barrels per day", "flow_rate", "m3/s",
+_reg("Mbbl/day",  "thousand barrels per day", "flow_rate", "m^3/s",
      158.987294928  / 86_400)
-_reg("m3/day",    "cubic metres per day",     "flow_rate", "m3/s",
+_reg("m3/day",    "cubic metres per day",     "flow_rate", "m^3/s",
      1.0            / 86_400)
-_reg("Mscf/day",  "thousand scf per day",     "flow_rate", "m3/s",
+_reg("Mscf/day",  "thousand scf per day",     "flow_rate", "m^3/s",
      28.3168466     / 86_400)
 
 # ── API gravity ───────────────────────────────────────────────────────────────
@@ -84,8 +84,8 @@ register("°API", Unit("API gravity", "api_gravity", "1", 1.0, "°API"))
 # quantities that preserve petroleum meaning through calculations.
 
 # Reservoir and stock-tank cubic metres
-register_tagged("Sm3_res", "m3",  "reservoir")
-register_tagged("Sm3_st",  "m3",  "stock_tank")
+register_tagged("Sm3_res", "m^3",  "reservoir")
+register_tagged("Sm3_st",  "m^3",  "stock_tank")
 
 # Reservoir and stock-tank standard cubic feet
 # Base is "scf" (not "m3") so SI factors are correct for scf/STB GOR
