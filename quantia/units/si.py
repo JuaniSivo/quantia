@@ -11,6 +11,13 @@ _reg("mm",  "millimetre", "length", "m", 0.001)
 _reg("nm",  "nanometre",  "length", "m", 1e-9)
 _reg("um",  "micrometre", "length", "m", 1e-6)
 
+# ── Area / Volume atomic shorthands ──────────────────────────────────────────
+# Both m^2 and m2 are valid expressions. m^2 is the canonical compound form.
+# m2 / m3 are registered atomic aliases so engineers can write them as bare
+# unit strings (e.g. qu.Q(1.0, "m3")) without the exponent syntax.
+_reg("m2", "square metre",  "area",   "m^2", 1.0)
+_reg("m3", "cubic metre",   "volume", "m^3", 1.0)
+
 # Mass
 _reg("kg",  "kilogram",  "mass", "kg", 1.0)
 _reg("g",   "gram",      "mass", "kg", 0.001)
