@@ -331,7 +331,7 @@ class TestPressureChain:
         # Typical oil gradient: ~0.35 psi/ft
         # 0.35 psi/ft × 1000 ft = 350 psi pressure difference
         depth    = qu.Q(1_000.0, "ft")
-        gradient = qu.Q(0.35,    "psi") / qu.Q(1.0, "ft")
+        gradient = qu.Q(0.35, "psia") / qu.Q(1.0, "ft")  # psi → psia
         delta_p  = gradient * depth
         assert delta_p.to("psia").value == pytest.approx(350.0, rel=1e-6)
 
