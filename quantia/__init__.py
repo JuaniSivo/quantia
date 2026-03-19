@@ -12,6 +12,7 @@ from quantia._compound    import parse_unit, register_alias, register_tagged
 from quantia._registry    import register, get_unit, registered_symbols
 from quantia._io          import save, load, from_dict
 from quantia._config      import config
+from quantia.petroleum_conversions import api_to_sg, sg_to_api
 
 
 def Q(value: float, unit) -> UnitFloat:
@@ -39,4 +40,5 @@ __all__ = [
     "UnknownUnitError", "IncompatibleUnitsError", "DimensionError", "UnitParseError",
     "save", "load", "from_dict",
     "config",
+    "api_to_sg", "sg_to_api",
 ]
