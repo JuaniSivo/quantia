@@ -63,8 +63,14 @@ class CompoundUnit:
         return CompoundUnit(m, label=label)
 
     def __truediv__(self, other: "CompoundUnit") -> "CompoundUnit":
-        # 2e: if both have labels, produce a new labeled ratio instead of cancelling
         if self._label is not None and other._label is not None:
+            # Same label cancels normally — Sm3_res/Sm3_res → dimensionless
+            if self._label == other._label:
+                m = dict(self._f)
+                for s, e in other._f.items():
+                    m[s] = m.get(s, Fraction(0)) - e
+                return CompoundUnit(m)  # no label
+            # Different labels — produce labeled ratio
             new_label = f"{self._label}/{other._label}"
             m = dict(self._f)
             for s, e in other._f.items():

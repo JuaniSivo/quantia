@@ -243,9 +243,14 @@ class ProbUnitFloat:
         if isinstance(o,UnitFloat):   return self.__truediv__(ProbUnitFloat.from_unitfloat(o,self._n))
         if isinstance(o,(int,float)): return self._scalar_op(float(o),operator.truediv)
         return NotImplemented
-    def __rtruediv__(self,o):
-        if isinstance(o,(int,float)):
-            return ProbUnitFloat._from_raw(_array.array('d',(float(o)/v for v in self._samples)),self._unit.invert())
+    def __rtruediv__(self, o):
+        if isinstance(o, UnitFloat):
+            # UnitFloat / ProbUnitFloat — convert UnitFloat to ProbUnitFloat first
+            return ProbUnitFloat.from_unitfloat(o, self._n).__truediv__(self)
+        if isinstance(o, (int, float)):
+            return ProbUnitFloat._from_raw(
+                _array.array('d', (float(o) / v for v in self._samples)),
+                self._unit.invert())
         return NotImplemented
     def __pow__(self,e):
         return ProbUnitFloat._from_raw(_array.array('d',(v**e for v in self._samples)),self._unit**e)
