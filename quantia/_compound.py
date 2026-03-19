@@ -63,8 +63,14 @@ class CompoundUnit:
         return CompoundUnit(m, label=label)
 
     def __truediv__(self, other: "CompoundUnit") -> "CompoundUnit":
-        # 2e: if both have labels, produce a new labeled ratio instead of cancelling
         if self._label is not None and other._label is not None:
+            # Same label cancels normally — Sm3_res/Sm3_res → dimensionless
+            if self._label == other._label:
+                m = dict(self._f)
+                for s, e in other._f.items():
+                    m[s] = m.get(s, Fraction(0)) - e
+                return CompoundUnit(m)  # no label
+            # Different labels — produce labeled ratio
             new_label = f"{self._label}/{other._label}"
             m = dict(self._f)
             for s, e in other._f.items():
@@ -104,10 +110,27 @@ class CompoundUnit:
         return r
 
     def to_si_compound(self) -> "CompoundUnit":
+        """Convert this compound unit to its SI base unit representation.
+
+        Handles both simple si_unit strings (e.g. "m", "kg") and compound
+        si_unit strings (e.g. "m/s", "m3/s") by parsing them when needed.
+        Previously, compound si_unit strings were used as atomic keys, which
+        caused is_compatible() to fail for units like kn, mph, bbl/day.
+        """
         m: dict[str, Fraction] = {}
         for s, e in self._f.items():
-            si = get_unit(s).si_unit
-            m[si] = m.get(si, Fraction(0)) + e
+            si_str = get_unit(s).si_unit
+            # si_unit may be a compound expression like "m/s" or "m3/s".
+            # Parse it to get the actual base unit components.
+            # For simple units like "m" or "kg", parse_unit returns a single-
+            # factor CompoundUnit — behaviour is identical to before.
+            try:
+                si_cu = parse_unit(si_str)
+            except Exception:
+                # Fallback: treat as atomic symbol (e.g. dimensionless "1")
+                si_cu = CompoundUnit({si_str: Fraction(1)})
+            for si_sym, si_exp in si_cu._f.items():
+                m[si_sym] = m.get(si_sym, Fraction(0)) + si_exp * e
         return CompoundUnit(m)
 
     # ── Compatibility ─────────────────────────────────────────────────────────
@@ -199,20 +222,44 @@ _TAGGED_LABELS: dict[str, str] = {}   # symbol → tag
 _UNIT_CACHE: dict[str, CompoundUnit] = {}
 
 def _make_unit(unit) -> CompoundUnit:
-    """Coerce a str or CompoundUnit to CompoundUnit. Registry lookups are cached."""
+    """Coerce a str or CompoundUnit to CompoundUnit.
+
+    Ambiguous units (psi, bar, BTU, cal, kcal) are NOT cached — they must
+    call get_unit() on every use so the UserWarning fires each time.
+    Non-ambiguous registry lookups are cached for performance.
+    """
     if isinstance(unit, CompoundUnit):
         return unit
     if isinstance(unit, str):
-        cached = _UNIT_CACHE.get(unit)
-        if cached is not None:
-            return cached
-        if unit in _REGISTRY:
-            cu = CompoundUnit({unit: Fraction(1)},
-                              label=unit if unit in _TAGGED_LABELS else None)
-        else:
+        from quantia._registry import _AMBIGUOUS_UNITS
+        is_ambiguous = unit in _AMBIGUOUS_UNITS
+
+        # Only use cache for non-ambiguous units
+        if not is_ambiguous:
+            cached = _UNIT_CACHE.get(unit)
+            if cached is not None:
+                return cached
+
+        # Try registry first — get_unit() fires warnings for ambiguous symbols
+        # and returns the redirected canonical unit
+        try:
+            u = get_unit(unit)          # may warn + redirect (e.g. psi → psia)
+            actual_sym = u.symbol       # use the canonical symbol after redirect
+        except UnknownUnitError:
+            # Not a bare registry symbol — parse as compound expression
             cu = parse_unit(unit)
-        _UNIT_CACHE[unit] = cu
+            if not is_ambiguous:
+                _UNIT_CACHE[unit] = cu
+            return cu
+
+        label = actual_sym if actual_sym in _TAGGED_LABELS else None
+        cu = CompoundUnit({actual_sym: Fraction(1)}, label=label)
+
+        # Cache non-ambiguous units only
+        if not is_ambiguous:
+            _UNIT_CACHE[unit] = cu
         return cu
+
     raise TypeError(f"unit must be str or CompoundUnit, got {type(unit).__name__!r}")
 
 
