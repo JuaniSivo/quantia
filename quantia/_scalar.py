@@ -36,29 +36,47 @@ class UnitFloat:
             if isinstance(u, AffineUnit) and exp == 1:   # ← remove `u.offset != 0.0`
                 return u
         return None
-
+    
     def to_si(self) -> "UnitFloat":
         affine = self._is_single_affine(self._unit)
         if affine:
-            return UnitFloat(affine.to_kelvin(self._value), "K")
+            return UnitFloat(affine.to_si_value(self._value), affine.si_unit)
         return UnitFloat(self._value * self._unit.si_factor(),
-                         self._unit.to_si_compound())
+                        self._unit.to_si_compound())
 
     def si_value(self) -> float:
         return self.to_si()._value
-
+    
     def to(self, target) -> "UnitFloat":
         tcu = _make_unit(target)
-        # Temperature path — single affine on both sides
         src_affine = self._is_single_affine(self._unit)
         tgt_affine = self._is_single_affine(tcu)
-        if src_affine or tgt_affine:
-            if not (src_affine and tgt_affine):
-                raise DimensionError(
-                    "Cannot mix temperature and non-temperature units in .to()")
-            k = src_affine.to_kelvin(self._value)
-            return UnitFloat(tgt_affine.from_kelvin(k), target)
-        # General path
+
+        if src_affine and tgt_affine:
+            # Both affine: °C→K, psig→psia, barg→bara, etc.
+            si_val = src_affine.to_si_value(self._value)
+            return UnitFloat(tgt_affine.from_si_value(si_val), target)
+
+        if src_affine:
+            # Affine → plain: psia→Pa, psig→kPa, °C→[invalid if Pa]
+            # Go through SI absolute value, then scale to target.
+            # Dimensional compatibility is checked via si_unit of the affine unit,
+            # so °C→Pa raises IncompatibleUnitsError because K ≠ Pa.
+            si_val    = src_affine.to_si_value(self._value)
+            si_unit_cu = _make_unit(src_affine.si_unit)
+            if not si_unit_cu.is_compatible(tcu):
+                raise IncompatibleUnitsError(self._unit, tcu)
+            return UnitFloat(si_val / tcu.si_factor(), tcu)
+
+        if tgt_affine:
+            # Plain → affine: Pa→psig, Pa→°C[invalid if m], etc.
+            si_unit_cu = _make_unit(tgt_affine.si_unit)
+            if not self._unit.is_compatible(si_unit_cu):
+                raise IncompatibleUnitsError(self._unit, tcu)
+            si_val = self._value * self._unit.si_factor()
+            return UnitFloat(tgt_affine.from_si_value(si_val), target)
+
+        # Both plain: standard multiplicative path
         if not self._unit.is_compatible(tcu):
             raise IncompatibleUnitsError(self._unit, tcu)
         return UnitFloat(
