@@ -75,9 +75,10 @@ class TestNonCancellation:
         assert not gor.unit.is_dimensionless()
 
     def test_Sm3_res_div_Sm3_res_IS_dimensionless(self):
-        # Dividing SAME tag cancels normally — only different tags preserve
+        # Same tag divides normally — only different tags preserve label
         ratio = qu.Q(2.0, "Sm3_res") / qu.Q(1.0, "Sm3_res")
         assert ratio.unit.is_dimensionless()
+        assert ratio.value == pytest.approx(2.0, rel=1e-9)
 
     def test_plain_m3_div_m3_is_dimensionless(self):
         # Plain (untagged) volume always cancels
