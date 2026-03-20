@@ -1,12 +1,14 @@
 from __future__ import annotations
 import math, random
 import array as _array
-from typing import Union
-from quantia._compound import CompoundUnit
-from quantia.prob._scalar import ProbUnitFloat
+from typing import Union, TYPE_CHECKING
 from quantia.prob._distributions import (
     _norm_cdf, icdf_uniform, icdf_normal, icdf_triangular, icdf_lognormal
 )
+
+if TYPE_CHECKING:
+    from quantia._compound import CompoundUnit
+    from quantia.prob._scalar import ProbUnitFloat
 
 _N_SAMPLES = 1000
 
