@@ -11,6 +11,41 @@ from quantia._exceptions import IncompatibleUnitsError
 
 
 class UnitArray:
+    """An exact array of values sharing a single physical unit.
+
+    All elements carry the same unit. Arithmetic operations between
+    two ``UnitArray`` instances check dimensional compatibility and
+    handle unit conversion automatically.
+
+    Parameters
+    ----------
+    values : iterable of float
+        Numeric values, all in the given unit.
+    unit : str or CompoundUnit
+        Physical unit shared by all elements.
+
+    Raises
+    ------
+    TypeError
+        If any element of ``values`` is not numeric.
+
+    Examples
+    --------
+    >>> import quantia as qu
+    >>> heights = qu.QA([1.75, 1.80, 1.65], 'm')
+    >>> heights.mean()
+    UnitFloat(1.7333..., 'm')
+
+    >>> heights.to('cm')
+    UnitArray([175.0, 180.0, 165.0], 'cm')
+
+    Boolean mask filtering:
+
+    >>> tall = heights[heights > qu.Q(1.78, 'm')]
+    >>> list(tall.values)
+    [1.8]
+    """
+
     def __init__(self, values: Iterable[float],
                  unit: Union[str, "CompoundUnit"]) -> None:
         raw = list(values)
@@ -30,10 +65,44 @@ class UnitArray:
         return self._data
 
     def to_si(self) -> "UnitArray":
+        """Convert all elements to the SI base unit representation.
+
+        Returns
+        -------
+        UnitArray
+            New array with values in SI base units.
+
+        Examples
+        --------
+        >>> qu.QA([1.0, 2.0], 'km').to_si()
+        UnitArray([1000.0, 2000.0], 'm')
+        """
         f = self._unit.si_factor()
         return UnitArray((v*f for v in self._data), self._unit.to_si_compound())
 
     def to(self, target: Union[str, "CompoundUnit"]) -> "UnitArray":
+        """Convert all elements to a different unit of the same quantity.
+
+        Parameters
+        ----------
+        target : str or CompoundUnit
+            Target unit. Must be dimensionally compatible.
+
+        Returns
+        -------
+        UnitArray
+            New array with all values expressed in ``target``.
+
+        Raises
+        ------
+        IncompatibleUnitsError
+            If ``target`` has different physical dimensions.
+
+        Examples
+        --------
+        >>> qu.QA([1.0, 2.0, 3.0], 'km').to('m')
+        UnitArray([1000.0, 2000.0, 3000.0], 'm')
+        """
         tcu = _make_unit(target)
         if not self._unit.is_compatible(tcu):
             raise IncompatibleUnitsError(self._unit, tcu)
@@ -107,15 +176,82 @@ class UnitArray:
     def __ge__(self, o): return self._cmp(o, operator.ge)
 
     def sum(self)  -> "UnitFloat":
+        """Return the sum of all elements.
+
+        Returns
+        -------
+        UnitFloat
+            Sum in the array's unit.
+
+        Examples
+        --------
+        >>> qu.QA([1.0, 2.0, 3.0], 'm').sum()
+        UnitFloat(6.0, 'm')
+        """
         return UnitFloat(sum(self._data), self._unit)
+    
     def mean(self) -> "UnitFloat":
+        """Return the arithmetic mean of all elements.
+
+        Returns
+        -------
+        UnitFloat
+            Mean in the array's unit.
+
+        Examples
+        --------
+        >>> qu.QA([10.0, 20.0, 30.0], 'm').mean()
+        UnitFloat(20.0, 'm')
+        """
         return UnitFloat(sum(self._data)/len(self._data), self._unit)
+    
     def min(self)  -> "UnitFloat":
+        """Return the minimum element.
+
+        Returns
+        -------
+        UnitFloat
+            Minimum value in the array's unit.
+        """
         return UnitFloat(min(self._data), self._unit)
+    
     def max(self)  -> "UnitFloat":
+        """Return the maximum element.
+
+        Returns
+        -------
+        UnitFloat
+            Maximum value in the array's unit.
+        """
         return UnitFloat(max(self._data), self._unit)
+    
     def dot(self, o: "UnitArray") -> "UnitFloat":
-        if len(self) != len(o): raise ValueError("Length mismatch for dot product")
+        """Compute the dot product with another array.
+
+        Parameters
+        ----------
+        o : UnitArray
+            Second operand. Must have the same length.
+
+        Returns
+        -------
+        UnitFloat
+            Scalar result with the product unit.
+
+        Raises
+        ------
+        ValueError
+            If arrays have different lengths.
+
+        Examples
+        --------
+        >>> a = qu.QA([1.0, 2.0, 3.0], 'N')
+        >>> b = qu.QA([4.0, 5.0, 6.0], 'm')
+        >>> a.dot(b)
+        UnitFloat(32.0, 'J')
+        """
+        if len(self) != len(o):
+            raise ValueError("Length mismatch for dot product")
         val = sum(a*b for a,b in zip(self._data, o._data))
         cu  = self._unit * o._unit
         return UnitFloat(val, CompoundUnit.dimensionless() if cu.is_dimensionless() else cu)

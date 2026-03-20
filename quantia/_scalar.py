@@ -8,7 +8,50 @@ from quantia._exceptions import IncompatibleUnitsError, DimensionError
 
 
 class UnitFloat:
-    """An exact scalar value with a CompoundUnit."""
+    """An exact scalar value with a physical unit.
+
+    Supports unit-safe arithmetic, conversion, and comparison.
+    Dimensional compatibility is checked automatically on every
+    operation that combines two ``UnitFloat`` instances.
+
+    Parameters
+    ----------
+    value : float
+        Numeric value in the given unit. Must not be NaN.
+    unit : str or CompoundUnit
+        Unit expression string (e.g. ``'kg·m/s^2'``, ``'psia'``) or
+        a :class:`~quantia._compound.CompoundUnit` instance.
+
+    Raises
+    ------
+    UnknownUnitError
+        If ``unit`` contains an unregistered symbol.
+    UnitParseError
+        If ``unit`` is a malformed expression string.
+    ValueError
+        If ``value`` is NaN.
+
+    Examples
+    --------
+    Basic arithmetic and conversion:
+
+    >>> import quantia as qu
+    >>> d = qu.Q(100.0, 'm')
+    >>> t = qu.Q(10.0, 's')
+    >>> v = d / t
+    >>> v.to('km/h')
+    UnitFloat(36.0, 'km/h')
+
+    Temperature conversion (affine):
+
+    >>> qu.Q(100.0, '°C').to('K')
+    UnitFloat(373.15, 'K')
+
+    Gauge to absolute pressure:
+
+    >>> qu.Q(0.0, 'psig').to('psia')
+    UnitFloat(14.695..., 'psia')
+    """
 
     __slots__ = ("_value", "_unit")
 
@@ -39,6 +82,29 @@ class UnitFloat:
         return None
     
     def to_si(self) -> "UnitFloat":
+        """Convert to the SI base unit representation.
+
+        For affine units (temperature, gauge pressure) applies the full
+        affine transformation including offset. For multiplicative units
+        applies the scale factor only.
+
+        Returns
+        -------
+        UnitFloat
+            Value expressed in SI base units (e.g. ``K``, ``Pa``,
+            ``m/s``, ``m^3``).
+
+        Examples
+        --------
+        >>> qu.Q(1.0, 'km').to_si()
+        UnitFloat(1000.0, 'm')
+
+        >>> qu.Q(100.0, '°C').to_si()
+        UnitFloat(373.15, 'K')
+
+        >>> qu.Q(0.0, 'psig').to_si()
+        UnitFloat(101325.0, 'Pa')
+        """
         affine = self._is_single_affine(self._unit)
         if affine:
             return UnitFloat(affine.to_si_value(self._value), affine.si_unit)
@@ -46,9 +112,69 @@ class UnitFloat:
                         self._unit.to_si_compound())
 
     def si_value(self) -> float:
+        """Return the numeric SI value as a plain float.
+
+        Equivalent to ``self.to_si().value``. Use this when you need a
+        dimensionless number for further computation or comparison.
+
+        Returns
+        -------
+        float
+            Numeric value in SI base units.
+
+        Examples
+        --------
+        >>> qu.Q(1.0, 'km').si_value()
+        1000.0
+
+        >>> qu.Q(1.0, 'bbl').si_value()
+        0.158987294928
+
+        >>> qu.Q(0.0, 'psig').si_value()
+        101325.0
+        """
         return self.to_si()._value
     
     def to(self, target: Union[str, "CompoundUnit"]) -> "UnitFloat":
+        """Convert to a different unit of the same physical quantity.
+
+        Handles multiplicative units (``m`` → ``km``) and affine units
+        (``°C`` → ``K``, ``psig`` → ``psia``, ``psig`` → ``Pa``).
+
+        Parameters
+        ----------
+        target : str or CompoundUnit
+            Target unit. Must be dimensionally compatible with the
+            current unit.
+
+        Returns
+        -------
+        UnitFloat
+            New instance with the value expressed in ``target``.
+
+        Raises
+        ------
+        IncompatibleUnitsError
+            If ``target`` has different physical dimensions
+            (e.g. pressure → length).
+        DimensionError
+            If mixing affine and non-affine units of incompatible
+            quantities (e.g. ``psig`` → ``m``).
+
+        Examples
+        --------
+        >>> qu.Q(1.0, 'km').to('m')
+        UnitFloat(1000.0, 'm')
+
+        >>> qu.Q(100.0, '°C').to('°F')
+        UnitFloat(212.0, '°F')
+
+        >>> qu.Q(100.0, 'psig').to('bara')
+        UnitFloat(7.895..., 'bara')
+
+        >>> qu.Q(1.0, 'bbl').to('L')
+        UnitFloat(158.987..., 'L')
+        """
         tcu = _make_unit(target)
         src_affine = self._is_single_affine(self._unit)
         tgt_affine = self._is_single_affine(tcu)

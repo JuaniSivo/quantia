@@ -27,36 +27,59 @@ def api_to_sg(
 ) -> Union[float, "ProbUnitFloat"]:
     """Convert API gravity to specific gravity relative to water at 60°F.
 
-    Formula:  SG = 141.5 / (°API + 131.5)
-
-    Defined by API MPMS Ch.11. Specific gravity is relative to water
-    at 60°F (15.56°C), where water = 10 °API = SG 1.0 by definition.
-
     Parameters
     ----------
-    api : float | UnitFloat | ProbUnitFloat
-        API gravity value. If UnitFloat, must have quantity 'api_gravity'
-        or be dimensionless. If ProbUnitFloat, returns ProbUnitFloat.
+    api : float, UnitFloat, or ProbUnitFloat
+        API gravity value. When a :class:`~quantia._scalar.UnitFloat`
+        is passed, the ``.value`` attribute is extracted. When a
+        :class:`~quantia.prob._scalar.ProbUnitFloat` is passed, the
+        conversion is applied sample-wise and a new ``ProbUnitFloat``
+        is returned.
 
     Returns
     -------
     float or ProbUnitFloat
-        Specific gravity (dimensionless). Returns same type as input
-        when input is ProbUnitFloat.
-
-    Examples
-    --------
-    >>> api_to_sg(10.0)   # water by definition
-    1.0
-    >>> api_to_sg(35.0)   # medium crude
-    0.8498...
-    >>> api_to_sg(60.0)   # light condensate
-    0.7389...
+        Specific gravity (dimensionless). Returns the same type as
+        the input when input is ``ProbUnitFloat``.
 
     Raises
     ------
-    ValueError : If API gravity <= -131.5 (division by zero / negative SG)
+    ValueError
+        If ``api <= −131.5`` (produces zero or negative specific gravity).
+
+    Notes
+    -----
+    Formula per API MPMS Chapter 11:
+
+    .. math::
+
+        SG = \\frac{141.5}{°API + 131.5}
+
+    Water is defined as 10 °API = SG 1.0.
+
+    See Also
+    --------
+    sg_to_api : Inverse conversion.
+
+    Examples
+    --------
+    >>> from quantia.petroleum_conversions import api_to_sg
+    >>> api_to_sg(10.0)    # water by definition
+    1.0
+    >>> api_to_sg(35.0)    # medium crude
+    0.8498...
+    >>> api_to_sg(60.0)    # light condensate
+    0.7389...
+
+    Uncertain API gravity:
+
+    >>> with qu.config(seed=42, n_samples=2000):
+    ...     api = qu.ProbUnitFloat.normal(35.0, 3.0, '1')
+    >>> sg = api_to_sg(api)   # ProbUnitFloat
+    >>> sg.mean().value
+    0.849...
     """
+
     from quantia.prob._scalar import ProbUnitFloat as _PUF
     import array as _array
 
@@ -74,31 +97,42 @@ def sg_to_api(
 ) -> Union[float, "ProbUnitFloat"]:
     """Convert specific gravity to API gravity.
 
-    Formula:  °API = 141.5 / SG − 131.5
-
     Parameters
     ----------
-    sg : float | UnitFloat | ProbUnitFloat
-        Specific gravity (dimensionless, relative to water at 60°F).
-        Must be > 0.
+    sg : float, UnitFloat, or ProbUnitFloat
+        Specific gravity relative to water at 60°F. Must be > 0.
 
     Returns
     -------
     float or ProbUnitFloat
-        API gravity in degrees. Returns same type as input
-        when input is ProbUnitFloat.
-
-    Examples
-    --------
-    >>> sg_to_api(1.0)    # water
-    10.0
-    >>> sg_to_api(0.85)   # medium crude
-    35.03...
+        API gravity in degrees.
 
     Raises
     ------
-    ValueError : If SG <= 0
+    ValueError
+        If ``sg <= 0``.
+
+    Notes
+    -----
+    Formula per API MPMS Chapter 11:
+
+    .. math::
+
+        °API = \\frac{141.5}{SG} - 131.5
+
+    See Also
+    --------
+    api_to_sg : Inverse conversion.
+
+    Examples
+    --------
+    >>> from quantia.petroleum_conversions import sg_to_api
+    >>> sg_to_api(1.0)     # water
+    10.0
+    >>> sg_to_api(0.85)    # medium crude
+    35.03...
     """
+    
     from quantia.prob._scalar import ProbUnitFloat as _PUF
     import array as _array
 
