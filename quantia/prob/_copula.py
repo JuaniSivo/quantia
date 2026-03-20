@@ -53,18 +53,55 @@ def gaussian_copula(n, corr_matrix):
 
 
 class CorrelatedSource:
-    """
-    Generates correlated ProbUnitFloat samples via a Gaussian copula.
+    """Generate correlated Monte Carlo samples via a Gaussian copula.
 
-    Construction
-    ------------
-    src = CorrelatedSource(n_vars=2, rho=0.9)
-    src = CorrelatedSource(corr_matrix=[[1,.8],[.8,1]])
+    Use when input variables are statistically dependent. Independent
+    sampling (using separate :class:`ProbUnitFloat` factories) will
+    underestimate the spread of outputs when inputs are correlated.
 
-    Usage
-    -----
-    x = src.draw(slot=0, dist="normal",     mean=10, std=1,  unit="N")
-    y = src.draw(slot=1, dist="triangular", low=4,   mode=5, high=6, unit="m")
+    The copula generates uniform marginals with the specified correlation
+    structure, then transforms each marginal to the target distribution
+    via its inverse CDF.
+
+    Parameters
+    ----------
+    n_vars : int, optional
+        Number of correlated variables. Required if ``corr_matrix``
+        is not provided.
+    rho : float, optional
+        Uniform pairwise correlation coefficient in (-1, 1). Required
+        together with ``n_vars``.
+    corr_matrix : list of list of float, optional
+        Full correlation matrix. Overrides ``n_vars``/``rho`` when given.
+        Must be symmetric, positive definite, with ones on the diagonal.
+    n : int, optional
+        Sample count. Defaults to active :func:`~quantia.config` value.
+
+    Raises
+    ------
+    ValueError
+        If the correlation matrix is not symmetric or not positive definite,
+        or if ``rho`` is not in (-1, 1).
+
+    Examples
+    --------
+    Uniform pairwise correlation:
+
+    >>> src = qu.CorrelatedSource(n_vars=2, rho=0.8)
+    >>> x = src.draw(0, 'normal',  'm', mean=10.0, std=1.0)
+    >>> y = src.draw(1, 'uniform', 's', low=1.0, high=3.0)
+
+    Full correlation matrix (e.g. formation thickness and porosity):
+
+    >>> with qu.config(n_samples=3000, seed=0):
+    ...     src = qu.CorrelatedSource(corr_matrix=[
+    ...         [1.0, 0.7, 0.4],
+    ...         [0.7, 1.0, 0.3],
+    ...         [0.4, 0.3, 1.0],
+    ...     ])
+    ...     thickness = src.draw(0, 'triangular', 'm', low=10, mode=15, high=22)
+    ...     porosity  = src.draw(1, 'normal',     '1', mean=0.18, std=0.02)
+    ...     Sw        = src.draw(2, 'uniform',    '1', low=0.15, high=0.35)
     """
 
     _DIST_MAP = {
@@ -108,6 +145,51 @@ class CorrelatedSource:
     def draw(self, slot: int, dist: str,
              unit: Union[str, "CompoundUnit"],
              **params) -> "ProbUnitFloat":
+        """Draw samples for one variable from the pre-generated copula.
+
+        Each slot can only be drawn once. Slots are consumed in any order.
+
+        Parameters
+        ----------
+        slot : int
+            Index of the variable in [0, n_vars − 1].
+        dist : str
+            Distribution name. One of ``'uniform'``, ``'normal'``,
+            ``'triangular'``, ``'lognormal'``.
+        unit : str or CompoundUnit
+            Physical unit for the samples.
+        **params
+            Distribution parameters passed by name:
+
+            - ``uniform``:    ``low``, ``high``
+            - ``normal``:     ``mean``, ``std``
+            - ``triangular``: ``low``, ``mode``, ``high``
+            - ``lognormal``:  ``mean``, ``std``
+
+        Returns
+        -------
+        ProbUnitFloat
+            Samples with the specified marginal distribution and the
+            correlation structure of the copula.
+
+        Raises
+        ------
+        IndexError
+            If ``slot`` is out of range.
+        RuntimeError
+            If ``slot`` has already been drawn.
+        ValueError
+            If ``dist`` is not a supported distribution name.
+        TypeError
+            If ``params`` do not match the distribution signature.
+
+        Examples
+        --------
+        >>> src = qu.CorrelatedSource(n_vars=2, rho=0.6)
+        >>> phi = src.draw(0, 'triangular', '1', low=0.12, mode=0.18, high=0.25)
+        >>> Bo  = src.draw(1, 'normal', 'Sm3_res', mean=1.25, std=0.05)
+        """
+        
         from quantia.prob._scalar import ProbUnitFloat
         if not isinstance(slot, int) or slot < 0 or slot >= self._k:
             raise IndexError(f"Slot {slot} out of range [0, {self._k-1}]")
