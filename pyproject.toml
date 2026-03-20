@@ -25,3 +25,10 @@ where = ["."]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
+
+[project.optional-dependencies]
+docs = [
+    "mkdocs-material>=9.0",
+    "mkdocstrings[python]>=0.24",
+    "mkdocs-autorefs>=0.5",
+]

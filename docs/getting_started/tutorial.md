@@ -1,4 +1,4 @@
-# quantia — Quick Start
+# Five-Minute Tutorial
 
 quantia is a pure-Python library for **unit-aware arithmetic** with first-class support
 for Monte Carlo uncertainty propagation.
