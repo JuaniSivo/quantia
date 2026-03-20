@@ -91,4 +91,6 @@ nav:
     - OOIP Calculation: examples/ooip.md
     - Solution GOR: examples/gor.md
     - Compressor Power: examples/compressor.md
+    - Correlated Inputs: examples/correlation.md
+    - Petroleum Rs Correlation: examples/petroleum_rs.md
   - Changelog: changelog.md
