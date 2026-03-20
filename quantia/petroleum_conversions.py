@@ -47,16 +47,6 @@ def api_to_sg(
     ValueError
         If ``api <= −131.5`` (produces zero or negative specific gravity).
 
-    Notes
-    -----
-    Formula per API MPMS Chapter 11:
-
-    .. math::
-
-        $$SG = \\frac{141.5}{^\\circ API + 131.5}$$
-
-    Water is defined as 10 °API = SG 1.0.
-
     See Also
     --------
     sg_to_api : Inverse conversion.
@@ -111,14 +101,6 @@ def sg_to_api(
     ------
     ValueError
         If ``sg <= 0``.
-
-    Notes
-    -----
-    Formula per API MPMS Chapter 11:
-
-    .. math::
-
-        $$^\\circ API = \\frac{141.5}{SG} - 131.5$$
 
     See Also
     --------
