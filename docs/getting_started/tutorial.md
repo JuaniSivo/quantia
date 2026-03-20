@@ -1,77 +1,87 @@
 # Five-Minute Tutorial
 
-quantia is a pure-Python library for **unit-aware arithmetic** with first-class support
-for Monte Carlo uncertainty propagation.
-
-## Installation
-
-pip install quantia
-
-## The Four Types
-
-| Type | Use when |
-|------|----------|
-| `UnitFloat`    | exact scalar with a unit |
-| `UnitArray`    | exact vector with a unit |
-| `ProbUnitFloat`| uncertain scalar (Monte Carlo samples) |
-| `ProbUnitArray`| uncertain vector |
-
-## Basic Usage
+This tutorial covers the four types in quantia with real examples.
+All code runs as-is after `pip install quantia`.
 ```python
 import quantia as qu
+```
 
-# Exact scalars
-d = qu.Q(100.0, "m")          # 100 m
-t = qu.Q(9.81,  "s")
+## Exact scalars — UnitFloat
 
-# Unit-safe arithmetic
-v = d / t                     # UnitFloat(10.19…, 'm/s')
-v.to("km/h")                  # convert
+Every value carries its unit. Arithmetic checks dimensional
+compatibility automatically.
+```python
+distance = qu.Q(100.0, 'm')
+time     = qu.Q(10.0,  's')
+velocity = distance / time     # UnitFloat(10.0, 'm/s')
 
-# Arrays
-heights = qu.QA([1.75, 1.80, 1.65], "m")
-heights.mean()                # UnitFloat(1.733…, 'm')
+velocity.to('km/h')            # UnitFloat(36.0, 'km/h')
+velocity.si_value()            # 10.0  (plain float, in m/s)
+```
 
-# Boolean mask
-tall = heights[heights > qu.Q(1.78, "m")]
+Adding incompatible units raises immediately:
+```python
+qu.Q(1.0, 'm') + qu.Q(1.0, 's')   # → IncompatibleUnitsError
+```
 
-# Uncertainty (Monte Carlo)
-with qu.config(n_samples=2000, seed=42):
-    efficiency = qu.ProbUnitFloat.uniform(0.88, 0.95, "1")
-    power_in   = qu.ProbUnitFloat.normal(500.0, 10.0, "W")
+Temperature uses the full affine conversion automatically:
+```python
+qu.Q(100.0, '°C').to('K')     # UnitFloat(373.15, 'K')
+qu.Q(100.0, '°C').to('°F')    # UnitFloat(212.0, '°F')
+```
+
+Gauge and absolute pressure:
+```python
+qu.Q(0.0,   'psig').to('psia')   # UnitFloat(14.695..., 'psia')
+qu.Q(100.0, 'psig').to('bara')   # UnitFloat(7.895...,  'bara')
+```
+
+## Exact arrays — UnitArray
+```python
+depths = qu.QA([1000.0, 1500.0, 2000.0], 'm')
+
+depths.mean()            # UnitFloat(1500.0, 'm')
+depths.to('ft')          # UnitArray([3280.8..., 4921.2..., 6561.7...], 'ft')
+
+# Boolean mask filtering
+deep = depths[depths > qu.Q(1200.0, 'm')]
+# UnitArray([1500.0, 2000.0], 'm')
+```
+
+## Uncertain scalars — ProbUnitFloat
+
+Use `qu.config()` to set the sample count and seed:
+```python
+with qu.config(n_samples=5000, seed=42):
+    efficiency = qu.ProbUnitFloat.uniform(0.88, 0.95, '1')
+    power_in   = qu.ProbUnitFloat.normal(500.0, 10.0, 'W')
 
 power_out = efficiency * power_in
-power_out.mean()              # UnitFloat(~457 W)
-power_out.interval(0.95)      # (lo, hi) 95 % CI
+
+power_out.mean()              # UnitFloat(≈457, 'W')
+power_out.std()               # UnitFloat(≈..., 'W')
+power_out.interval(0.90)      # (P5, P95) as UnitFloat tuple
+power_out.percentile(10)      # P10
 ```
 
-## Serialization
+## Petroleum OOIP in 10 lines
 ```python
-qu.save(power_out, "result.json")
-power_out2 = qu.load("result.json")
+with qu.config(n_samples=5000, seed=0):
+    phi = qu.ProbUnitFloat.triangular(0.12, 0.18, 0.25, '1')
+    Sw  = qu.ProbUnitFloat.uniform(0.20, 0.35, '1')
+    Bo  = qu.ProbUnitFloat.normal(1.25, 0.05, 'Sm3_res')
 
-# Or dict round-trip
-d = power_out.to_dict()
-power_out3 = qu.from_dict(d)
+Vp   = qu.Q(1_000_000.0, 'Sm3_res')   # 1 MMm3 pore volume
+ooip = Vp * phi * (1 - Sw) / (Bo / qu.Q(1.0, 'Sm3_st'))
+
+lo, hi = ooip.interval(0.80)           # P10–P90
+print(f"OOIP P10: {lo.to('MMbbl'):.2f}")
+print(f"OOIP P50: {ooip.percentile(50).to('MMbbl'):.2f}")
+print(f"OOIP P90: {hi.to('MMbbl'):.2f}")
 ```
 
-## CSV Export
-```python
-# UnitArray
-heights.to_csv("heights.csv")
+## Next steps
 
-# ProbUnitArray — means + stds + CIs
-results = qu.QPA([power_out, power_in])
-results.to_csv("summary.csv", confidence=0.90)
-results.samples_to_csv("raw_samples.csv")
-```
-
-## Math Functions
-```python
-import quantia.math as mmath
-
-angle = qu.Q(45.0, "deg")
-mmath.sin(angle)              # dimensionless UnitFloat
-mmath.sqrt(qu.Q(4.0, "m^2"))  # UnitFloat(2.0, 'm')
-mmath.log10(efficiency)       # works on ProbUnitFloat too
-```
+- [Choosing a Type](types.md) — when to use each of the four types
+- [Gauge vs Absolute Pressure](../concepts/pressure.md) — the psig/psia design
+- [Petroleum Units](../concepts/petroleum.md) — GOR and FVF with tagged units
