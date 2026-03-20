@@ -16,9 +16,15 @@ API Manual of Petroleum Measurement Standards (MPMS) Chapter 11
 Definition: SG = 141.5 / (°API + 131.5)
 """
 from __future__ import annotations
+from typing import Union, TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from quantia._scalar import UnitFloat
+    from quantia.prob._scalar import ProbUnitFloat
 
-def api_to_sg(api) -> float:
+def api_to_sg(
+    api: Union[float, "UnitFloat", "ProbUnitFloat"]
+) -> Union[float, "ProbUnitFloat"]:
     """Convert API gravity to specific gravity relative to water at 60°F.
 
     Formula:  SG = 141.5 / (°API + 131.5)
@@ -63,7 +69,9 @@ def api_to_sg(api) -> float:
     return _api_to_sg_scalar(v)
 
 
-def sg_to_api(sg) -> float:
+def sg_to_api(
+    sg: Union[float, "UnitFloat", "ProbUnitFloat"]
+) -> Union[float, "ProbUnitFloat"]:
     """Convert specific gravity to API gravity.
 
     Formula:  °API = 141.5 / SG − 131.5
