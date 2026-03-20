@@ -1,6 +1,6 @@
 from __future__ import annotations
 import array as _array, math, operator, random
-from typing import Iterable
+from typing import Iterable, Union
 from quantia._compound import CompoundUnit, _make_unit
 from quantia._scalar import UnitFloat
 from quantia._registry import get_unit, AffineUnit
@@ -11,7 +11,8 @@ from quantia.prob._copula import _N_SAMPLES
 
 class ProbUnitFloat:
 
-    def __init__(self, samples: Iterable[float], unit):
+    def __init__(self, samples: Iterable[float],
+                 unit: Union[str, "CompoundUnit"]) -> None:
         self._samples = _array.array('d', (float(v) for v in samples))
         self._unit    = _make_unit(unit)
         self._n       = len(self._samples)
@@ -37,19 +38,25 @@ class ProbUnitFloat:
             unit)
 
     @classmethod
-    def uniform(cls, low: float, high: float, unit, n=None):
+    def uniform(cls, low: float, high: float,
+                unit: Union[str, "CompoundUnit"],
+                n: int | None = None) -> "ProbUnitFloat":
         if low >= high:
             raise ValueError(f"uniform requires low < high, got low={low}, high={high}")
         return cls._independent(icdf_uniform, unit, _default_n(n), low, high)
 
     @classmethod
-    def normal(cls, mean: float, std: float, unit, n=None):
+    def normal(cls, mean: float, std: float,
+               unit: Union[str, "CompoundUnit"],
+               n: int | None = None) -> "ProbUnitFloat":
         if std <= 0:
             raise ValueError(f"normal requires std > 0, got std={std}")
         return cls._independent(icdf_normal, unit, _default_n(n), mean, std)
 
     @classmethod
-    def triangular(cls, low: float, mode: float, high: float, unit, n=None):
+    def triangular(cls, low: float, mode: float, high: float,
+                   unit: Union[str, "CompoundUnit"],
+                   n: int | None = None) -> "ProbUnitFloat":
         if not (low <= mode <= high):
             raise ValueError(f"triangular requires low <= mode <= high, got ({low}, {mode}, {high})")
         if low == high:
@@ -57,13 +64,15 @@ class ProbUnitFloat:
         return cls._independent(icdf_triangular, unit, _default_n(n), low, mode, high)
 
     @classmethod
-    def lognormal(cls, mean: float, std: float, unit, n=None):
+    def lognormal(cls, mean: float, std: float,
+                  unit: Union[str, "CompoundUnit"],
+                  n: int | None = None) -> "ProbUnitFloat":
         if std <= 0:
             raise ValueError(f"lognormal requires std > 0, got std={std}")
         return cls._independent(icdf_lognormal, unit, _default_n(n), mean, std)
 
     @classmethod
-    def from_unitfloat(cls, uf, n=None):
+    def from_unitfloat(cls, uf: "UnitFloat", n: int) -> "ProbUnitFloat":
         return cls._from_raw(_array.array('d',[uf.value]*n), uf.unit)
 
     # ── Statistics ────────────────────────────────────────────────────────────
@@ -90,28 +99,27 @@ class ProbUnitFloat:
         if not hasattr(self, '_sorted_cache'):
             self._sorted_cache = sorted(self._samples)
         return self._sorted_cache
-
-    def mean(self) -> UnitFloat:
-        return UnitFloat(sum(self._samples)/self._n, self._unit)
     
-    def std(self) -> UnitFloat:
+    def mean(self)     -> "UnitFloat":
+        return UnitFloat(sum(self._samples)/self._n, self._unit)
+    def std(self)      -> "UnitFloat":
         _, v = self._welford()
         return UnitFloat(v ** 0.5, self._unit)
-
-    def variance(self) -> UnitFloat:
+    def variance(self) -> "UnitFloat":
         _, v = self._welford()
         return UnitFloat(v, self._unit)
-
-    def min(self)      -> UnitFloat: return UnitFloat(min(self._samples), self._unit)
-    def max(self)      -> UnitFloat: return UnitFloat(max(self._samples), self._unit)
-
-    def median(self) -> UnitFloat:
+    def min(self)      -> "UnitFloat":
+        return UnitFloat(min(self._samples), self._unit)
+    def max(self)      -> "UnitFloat":
+        return UnitFloat(max(self._samples), self._unit)
+    def median(self)   -> "UnitFloat":
         s   = self._sorted
         mid = self._n // 2
         m   = s[mid] if self._n % 2 else (s[mid - 1] + s[mid]) / 2
         return UnitFloat(m, self._unit)
 
-    def interval(self, confidence=0.95):
+    def interval(self, confidence: float = 0.95
+                 ) -> tuple["UnitFloat", "UnitFloat"]:
         if not 0 < confidence < 1:
             raise ValueError(f"confidence must be in (0, 1), got {confidence}")
         tail = (1 - confidence) / 2
@@ -119,13 +127,14 @@ class ProbUnitFloat:
         return (UnitFloat(s[int(math.floor(tail * self._n))], self._unit),
                 UnitFloat(s[int(math.ceil((1 - tail) * self._n)) - 1], self._unit))
 
-    def percentile(self, p):
+    def percentile(self, p: float) -> "UnitFloat":
         if not 0 <= p <= 100:
             raise ValueError(f"percentile p must be in [0, 100], got {p}")
         s = self._sorted
         return UnitFloat(s[max(0, min(int(round(p / 100 * (self._n - 1))), self._n - 1))], self._unit)
 
-    def histogram(self, bins=10):
+    def histogram(self, bins: int = 10
+                  ) -> tuple[list[float], list[int]]:
         if bins < 1: raise ValueError(f"bins must be >= 1, got {bins}")
         lo,hi=min(self._samples),max(self._samples); w=(hi-lo)/bins
         edges=[lo+i*w for i in range(bins+1)]; counts=[0]*bins
@@ -134,7 +143,7 @@ class ProbUnitFloat:
 
     # ── Conversion ────────────────────────────────────────────────────────────
 
-    def to_si(self):
+    def to_si(self) -> "ProbUnitFloat":
         if len(self._unit._f) == 1:
             s, e = next(iter(self._unit._f.items()))
             u = get_unit(s)
@@ -148,7 +157,7 @@ class ProbUnitFloat:
             _array.array('d', (v * f for v in self._samples)),
             self._unit.to_si_compound())
 
-    def to(self, target):
+    def to(self, target: Union[str, "CompoundUnit"]) -> "ProbUnitFloat":
         tcu = _make_unit(target)
         src_affine = UnitFloat._is_single_affine(self._unit)
         tgt_affine = UnitFloat._is_single_affine(tcu)
@@ -204,46 +213,51 @@ class ProbUnitFloat:
     def _scalar_op(self,s,op,cu=None):
         return ProbUnitFloat._from_raw(_array.array('d',(op(v,s) for v in self._samples)),cu or self._unit)
 
-    def __add__(self,o):
+    def __add__(self, o: Union["ProbUnitFloat", "UnitFloat", int, float]
+                ) -> "ProbUnitFloat":
         if isinstance(o,ProbUnitFloat): return self._elem(o,operator.add)
         if isinstance(o,UnitFloat):     return self.__add__(ProbUnitFloat.from_unitfloat(o,self._n))
         if isinstance(o,(int,float)):   return self._scalar_op(float(o),operator.add)
         return NotImplemented
-    def __radd__(self, o):
+    def __radd__(self, o: Union["ProbUnitFloat", "UnitFloat", int, float]
+                 ) -> "ProbUnitFloat":
         if isinstance(o, UnitFloat):
             return self.__add__(o)
         return self.__add__(o)
-    def __sub__(self,o):
+    def __sub__(self, o: Union["ProbUnitFloat", "UnitFloat", int, float]
+                ) -> "ProbUnitFloat":
         if isinstance(o,ProbUnitFloat): return self._elem(o,operator.sub)
         if isinstance(o,UnitFloat):     return self.__sub__(ProbUnitFloat.from_unitfloat(o,self._n))
         if isinstance(o,(int,float)):   return self._scalar_op(float(o),operator.sub)
         return NotImplemented
-    def __rsub__(self, o):
+    def __rsub__(self, o: Union["UnitFloat", int, float]) -> "ProbUnitFloat":
         if isinstance(o, UnitFloat):
             return ProbUnitFloat.from_unitfloat(o, self._n).__sub__(self)
         if isinstance(o, (int, float)):
             return ProbUnitFloat._from_raw(
                 _array.array('d', (float(o) - v for v in self._samples)), self._unit)
         return NotImplemented
-    def __mul__(self,o):
+    def __mul__(self, o: Union["ProbUnitFloat", "UnitFloat", int, float]
+                ) -> "ProbUnitFloat":
         if isinstance(o,ProbUnitFloat):
             cu=self._unit*o._unit; cu=CompoundUnit.dimensionless() if cu.is_dimensionless() else cu
             return ProbUnitFloat._from_raw(_array.array('d',(a*b for a,b in zip(self._samples,o._samples))),cu)
         if isinstance(o,UnitFloat):   return self.__mul__(ProbUnitFloat.from_unitfloat(o,self._n))
         if isinstance(o,(int,float)): return self._scalar_op(float(o),operator.mul)
         return NotImplemented
-    def __rmul__(self, o):
+    def __rmul__(self, o: Union["UnitFloat", int, float]) -> "ProbUnitFloat":
         if isinstance(o, (int, float, UnitFloat)):
             return self.__mul__(o)
         return NotImplemented
-    def __truediv__(self,o):
+    def __truediv__(self, o: Union["ProbUnitFloat", "UnitFloat", int, float]
+                    ) -> "ProbUnitFloat":
         if isinstance(o,ProbUnitFloat):
             cu=self._unit/o._unit; cu=CompoundUnit.dimensionless() if cu.is_dimensionless() else cu
             return ProbUnitFloat._from_raw(_array.array('d',(a/b for a,b in zip(self._samples,o._samples))),cu)
         if isinstance(o,UnitFloat):   return self.__truediv__(ProbUnitFloat.from_unitfloat(o,self._n))
         if isinstance(o,(int,float)): return self._scalar_op(float(o),operator.truediv)
         return NotImplemented
-    def __rtruediv__(self, o):
+    def __rtruediv__(self, o: Union["UnitFloat", int, float]) -> "ProbUnitFloat":
         if isinstance(o, UnitFloat):
             # UnitFloat / ProbUnitFloat — convert UnitFloat to ProbUnitFloat first
             return ProbUnitFloat.from_unitfloat(o, self._n).__truediv__(self)
@@ -252,21 +266,30 @@ class ProbUnitFloat:
                 _array.array('d', (float(o) / v for v in self._samples)),
                 self._unit.invert())
         return NotImplemented
-    def __pow__(self,e):
+    def __pow__(self, e: Union[int, float]) -> "ProbUnitFloat":
         return ProbUnitFloat._from_raw(_array.array('d',(v**e for v in self._samples)),self._unit**e)
-    def __neg__(self):
+    def __neg__(self) -> "ProbUnitFloat":
         return ProbUnitFloat._from_raw(_array.array('d',(-v for v in self._samples)),self._unit)
-    def __abs__(self):
+    def __abs__(self) -> "ProbUnitFloat":
         return ProbUnitFloat._from_raw(_array.array('d',(abs(v) for v in self._samples)),self._unit)
 
-    def prob_lt(self,o):
-        if isinstance(o,ProbUnitFloat): a,b=self._aligned(o); return sum(x<y for x,y in zip(a,b))/self._n
-        if isinstance(o,UnitFloat):     return self.prob_lt(ProbUnitFloat.from_unitfloat(o,self._n))
-        if isinstance(o,(int,float)):   return sum(v<float(o) for v in self._samples)/self._n
+    def prob_lt(self, o: Union["ProbUnitFloat", "UnitFloat", int, float]
+                ) -> float:
+        if isinstance(o,ProbUnitFloat):
+            a,b=self._aligned(o)
+            return sum(x<y for x,y in zip(a,b))/self._n
+        if isinstance(o,UnitFloat):
+            return self.prob_lt(ProbUnitFloat.from_unitfloat(o,self._n))
+        if isinstance(o,(int,float)):
+            return sum(v<float(o) for v in self._samples)/self._n
         return NotImplemented
-    def prob_gt(self,o): return 1.0-self.prob_lt(o)-self.prob_eq(o)
+    def prob_gt(self, o: Union["ProbUnitFloat", "UnitFloat", int, float]
+                ) -> float:
+        return 1.0-self.prob_lt(o)-self.prob_eq(o)
     def prob_eq(self,o,tol=1e-9):
-        if isinstance(o,ProbUnitFloat): a,b=self._aligned(o); return sum(abs(x-y)<tol for x,y in zip(a,b))/self._n
+        if isinstance(o,ProbUnitFloat):
+            a,b=self._aligned(o)
+            return sum(abs(x-y)<tol for x,y in zip(a,b))/self._n
         return 0.0
 
     def __repr__(self):

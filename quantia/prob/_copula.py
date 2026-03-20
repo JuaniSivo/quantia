@@ -1,9 +1,14 @@
 from __future__ import annotations
 import math, random
 import array as _array
+from typing import Union, TYPE_CHECKING
 from quantia.prob._distributions import (
     _norm_cdf, icdf_uniform, icdf_normal, icdf_triangular, icdf_lognormal
 )
+
+if TYPE_CHECKING:
+    from quantia._compound import CompoundUnit
+    from quantia.prob._scalar import ProbUnitFloat
 
 _N_SAMPLES = 1000
 
@@ -69,7 +74,11 @@ class CorrelatedSource:
         "lognormal":  icdf_lognormal,
     }
 
-    def __init__(self, n_vars=None, rho=None, corr_matrix=None, n=None):
+    def __init__(self,
+                 n_vars: int | None = None,
+                 rho: float | None = None,
+                 corr_matrix: list[list[float]] | None = None,
+                 n: int | None = None) -> None:
         from quantia.prob._scalar import _default_n
         n = _default_n(n)
 
@@ -96,7 +105,9 @@ class CorrelatedSource:
         self._uniforms = gaussian_copula(n, self._matrix)
         self._used: set[int] = set()
 
-    def draw(self, slot: int, dist: str, unit, **params):
+    def draw(self, slot: int, dist: str,
+             unit: Union[str, "CompoundUnit"],
+             **params) -> "ProbUnitFloat":
         from quantia.prob._scalar import ProbUnitFloat
         if not isinstance(slot, int) or slot < 0 or slot >= self._k:
             raise IndexError(f"Slot {slot} out of range [0, {self._k-1}]")
@@ -113,11 +124,15 @@ class CorrelatedSource:
         self._used.add(slot)
         return ProbUnitFloat._from_raw(samples, unit)
 
-    def uniform(self, slot, low, high, unit):
+    def uniform(self, slot: int, low: float, high: float,
+                unit: Union[str, "CompoundUnit"]) -> "ProbUnitFloat":
         return self.draw(slot, "uniform", unit, low=low, high=high)
-    def normal(self, slot, mean, std, unit):
+    def normal(self, slot: int, mean: float, std: float,
+               unit: Union[str, "CompoundUnit"]) -> "ProbUnitFloat":
         return self.draw(slot, "normal", unit, mean=mean, std=std)
-    def triangular(self, slot, low, mode, high, unit):
+    def triangular(self, slot: int, low: float, mode: float, high: float,
+                   unit: Union[str, "CompoundUnit"]) -> "ProbUnitFloat":
         return self.draw(slot, "triangular", unit, low=low, mode=mode, high=high)
-    def lognormal(self, slot, mean, std, unit):
+    def lognormal(self, slot: int, mean: float, std: float,
+                  unit: Union[str, "CompoundUnit"]) -> "ProbUnitFloat":
         return self.draw(slot, "lognormal", unit, mean=mean, std=std)
