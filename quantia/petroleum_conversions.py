@@ -53,7 +53,7 @@ def api_to_sg(
 
     .. math::
 
-        SG = \\frac{141.5}{°API + 131.5}
+        $$SG = \\frac{141.5}{^\\circ API + 131.5}$$
 
     Water is defined as 10 °API = SG 1.0.
 
@@ -118,7 +118,7 @@ def sg_to_api(
 
     .. math::
 
-        °API = \\frac{141.5}{SG} - 131.5
+        $$^\\circ API = \\frac{141.5}{SG} - 131.5$$
 
     See Also
     --------
