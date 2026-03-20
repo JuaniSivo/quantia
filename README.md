@@ -1,3 +1,6 @@
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Documentation](https://readthedocs.org/projects/quantia/badge/?version=latest)](https://quantia.readthedocs.io)
+
 # quantia
 
 A pure-Python library for **unit-aware arithmetic** with first-class support for **Monte Carlo uncertainty propagation**.
