@@ -10,6 +10,46 @@ from quantia.prob._copula import _N_SAMPLES
 
 
 class ProbUnitFloat:
+    """An uncertain scalar quantity represented by Monte Carlo samples.
+
+    Stores ``n`` samples drawn from a probability distribution, all
+    carrying the same physical unit. Arithmetic between two
+    ``ProbUnitFloat`` instances is performed sample-wise, naturally
+    propagating correlations introduced by shared inputs.
+
+    Do not construct directly — use the class factories:
+    :meth:`uniform`, :meth:`normal`, :meth:`triangular`, :meth:`lognormal`.
+
+    Parameters passed to factories
+    --------------------------------
+    unit : str or CompoundUnit
+        Physical unit shared by all samples.
+    n : int, optional
+        Monte Carlo sample count. Defaults to the value set by
+        :func:`quantia.config` (1 000 if not overridden).
+
+    Examples
+    --------
+    Basic uncertainty propagation:
+
+    >>> import quantia as qu
+    >>> with qu.config(n_samples=5000, seed=42):
+    ...     eff      = qu.ProbUnitFloat.uniform(0.88, 0.95, '1')
+    ...     power_in = qu.ProbUnitFloat.normal(500.0, 10.0, 'W')
+    >>> power_out = eff * power_in
+    >>> power_out.mean()
+    UnitFloat(457..., 'W')
+    >>> lo, hi = power_out.interval(0.90)
+
+    Petroleum OOIP with uncertain Bo:
+
+    >>> with qu.config(seed=0, n_samples=3000):
+    ...     Bo = qu.ProbUnitFloat.normal(1.25, 0.05, 'Sm3_res')
+    >>> Vp   = qu.Q(1_000_000.0, 'Sm3_res')
+    >>> ooip = Vp * 0.75 / (Bo / qu.Q(1.0, 'Sm3_st'))
+    >>> ooip.percentile(10)   # P10
+    UnitFloat(..., ...)
+    """
 
     def __init__(self, samples: Iterable[float],
                  unit: Union[str, "CompoundUnit"]) -> None:
@@ -41,6 +81,36 @@ class ProbUnitFloat:
     def uniform(cls, low: float, high: float,
                 unit: Union[str, "CompoundUnit"],
                 n: int | None = None) -> "ProbUnitFloat":
+        """Create samples from a uniform distribution U(low, high).
+
+        Parameters
+        ----------
+        low : float
+            Lower bound (inclusive).
+        high : float
+            Upper bound. Must be strictly greater than ``low``.
+        unit : str or CompoundUnit
+            Physical unit for all samples.
+        n : int, optional
+            Sample count. Defaults to active :func:`~quantia.config` value.
+
+        Returns
+        -------
+        ProbUnitFloat
+
+        Raises
+        ------
+        ValueError
+            If ``low >= high``.
+
+        Examples
+        --------
+        >>> with qu.config(seed=0):
+        ...     eff = qu.ProbUnitFloat.uniform(0.88, 0.95, '1')
+        >>> eff.mean().value
+        0.915...
+        """
+
         if low >= high:
             raise ValueError(f"uniform requires low < high, got low={low}, high={high}")
         return cls._independent(icdf_uniform, unit, _default_n(n), low, high)
@@ -49,6 +119,36 @@ class ProbUnitFloat:
     def normal(cls, mean: float, std: float,
                unit: Union[str, "CompoundUnit"],
                n: int | None = None) -> "ProbUnitFloat":
+        """Create samples from a normal distribution N(mean, std).
+
+        Parameters
+        ----------
+        mean : float
+            Distribution mean.
+        std : float
+            Standard deviation. Must be strictly positive.
+        unit : str or CompoundUnit
+            Physical unit for all samples.
+        n : int, optional
+            Sample count.
+
+        Returns
+        -------
+        ProbUnitFloat
+
+        Raises
+        ------
+        ValueError
+            If ``std <= 0``.
+
+        Examples
+        --------
+        >>> with qu.config(seed=42):
+        ...     p = qu.ProbUnitFloat.normal(3000.0, 200.0, 'psia')
+        >>> p.std().value
+        200...
+        """
+
         if std <= 0:
             raise ValueError(f"normal requires std > 0, got std={std}")
         return cls._independent(icdf_normal, unit, _default_n(n), mean, std)
@@ -57,6 +157,36 @@ class ProbUnitFloat:
     def triangular(cls, low: float, mode: float, high: float,
                    unit: Union[str, "CompoundUnit"],
                    n: int | None = None) -> "ProbUnitFloat":
+        """Create samples from a triangular distribution.
+
+        Parameters
+        ----------
+        low : float
+            Minimum value.
+        mode : float
+            Most likely value. Must satisfy ``low <= mode <= high``.
+        high : float
+            Maximum value. Must be strictly greater than ``low``.
+        unit : str or CompoundUnit
+            Physical unit for all samples.
+        n : int, optional
+            Sample count.
+
+        Returns
+        -------
+        ProbUnitFloat
+
+        Raises
+        ------
+        ValueError
+            If ``low > mode``, ``mode > high``, or ``low == high``.
+
+        Examples
+        --------
+        >>> with qu.config(seed=1):
+        ...     h = qu.ProbUnitFloat.triangular(10.0, 15.0, 22.0, 'm')
+        """
+
         if not (low <= mode <= high):
             raise ValueError(f"triangular requires low <= mode <= high, got ({low}, {mode}, {high})")
         if low == high:
@@ -67,6 +197,29 @@ class ProbUnitFloat:
     def lognormal(cls, mean: float, std: float,
                   unit: Union[str, "CompoundUnit"],
                   n: int | None = None) -> "ProbUnitFloat":
+        """Create samples from a log-normal distribution.
+
+        Parameters
+        ----------
+        mean : float
+            Mean of the underlying normal distribution (i.e. ln X ~ N(mean, std)).
+        std : float
+            Standard deviation of the underlying normal. Must be > 0.
+        unit : str or CompoundUnit
+            Physical unit for all samples.
+        n : int, optional
+            Sample count.
+
+        Returns
+        -------
+        ProbUnitFloat
+
+        Raises
+        ------
+        ValueError
+            If ``std <= 0``.
+        """
+
         if std <= 0:
             raise ValueError(f"lognormal requires std > 0, got std={std}")
         return cls._independent(icdf_lognormal, unit, _default_n(n), mean, std)
@@ -101,18 +254,54 @@ class ProbUnitFloat:
         return self._sorted_cache
     
     def mean(self)     -> "UnitFloat":
+        """Return the sample mean.
+
+        Returns
+        -------
+        UnitFloat
+            Mean value in the distribution's unit.
+
+        Examples
+        --------
+        >>> with qu.config(seed=0, n_samples=10000):
+        ...     x = qu.ProbUnitFloat.uniform(0.0, 10.0, 'm')
+        >>> x.mean().value   # ≈ 5.0
+        5.0...
+        """
         return UnitFloat(sum(self._samples)/self._n, self._unit)
+    
     def std(self)      -> "UnitFloat":
+        """Return the sample standard deviation.
+
+        Uses Welford's online algorithm (single pass, numerically stable).
+
+        Returns
+        -------
+        UnitFloat
+            Standard deviation in the distribution's unit.
+        """
         _, v = self._welford()
         return UnitFloat(v ** 0.5, self._unit)
+    
     def variance(self) -> "UnitFloat":
         _, v = self._welford()
         return UnitFloat(v, self._unit)
+    
     def min(self)      -> "UnitFloat":
         return UnitFloat(min(self._samples), self._unit)
+    
     def max(self)      -> "UnitFloat":
         return UnitFloat(max(self._samples), self._unit)
+    
     def median(self)   -> "UnitFloat":
+        """Return the sample median (P50).
+
+        Returns
+        -------
+        UnitFloat
+            Median value in the distribution's unit.
+        """
+
         s   = self._sorted
         mid = self._n // 2
         m   = s[mid] if self._n % 2 else (s[mid - 1] + s[mid]) / 2
@@ -120,6 +309,30 @@ class ProbUnitFloat:
 
     def interval(self, confidence: float = 0.95
                  ) -> tuple["UnitFloat", "UnitFloat"]:
+        """Return a central confidence interval from the sample distribution.
+
+        Parameters
+        ----------
+        confidence : float
+            Confidence level in (0, 1). Default 0.95 returns the
+            P2.5–P97.5 range. Use 0.80 for P10–P90 (common in petroleum).
+
+        Returns
+        -------
+        tuple of (UnitFloat, UnitFloat)
+            ``(lower_bound, upper_bound)`` at the requested confidence level.
+
+        Raises
+        ------
+        ValueError
+            If ``confidence`` is not in (0, 1).
+
+        Examples
+        --------
+        >>> lo, hi = power_out.interval(0.90)   # P10–P90
+        >>> lo, hi = power_out.interval(0.80)   # P10–P90 (petroleum convention)
+        """
+
         if not 0 < confidence < 1:
             raise ValueError(f"confidence must be in (0, 1), got {confidence}")
         tail = (1 - confidence) / 2
@@ -128,6 +341,35 @@ class ProbUnitFloat:
                 UnitFloat(s[int(math.ceil((1 - tail) * self._n)) - 1], self._unit))
 
     def percentile(self, p: float) -> "UnitFloat":
+        """Return the p-th percentile of the sample distribution.
+
+        Parameters
+        ----------
+        p : float
+            Percentile value in [0, 100].
+            P10 = pessimistic, P50 = median, P90 = optimistic
+            (petroleum convention: P10 is the low case).
+
+        Returns
+        -------
+        UnitFloat
+            The p-th percentile in the distribution's unit.
+
+        Raises
+        ------
+        ValueError
+            If ``p`` is not in [0, 100].
+
+        Examples
+        --------
+        >>> ooip.percentile(10)    # P10 — low case
+        UnitFloat(..., 'bbl')
+        >>> ooip.percentile(50)    # P50 — base case
+        UnitFloat(..., 'bbl')
+        >>> ooip.percentile(90)    # P90 — high case
+        UnitFloat(..., 'bbl')
+        """
+        
         if not 0 <= p <= 100:
             raise ValueError(f"percentile p must be in [0, 100], got {p}")
         s = self._sorted
