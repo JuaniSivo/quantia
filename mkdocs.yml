@@ -1,0 +1,96 @@
+site_name: quantia
+site_description: Unit-aware arithmetic with Monte Carlo uncertainty propagation
+site_url: https://quantia.readthedocs.io
+repo_url: https://github.com/JuaniSivo/quantia
+repo_name: JuaniSivo/quantia
+copyright: "Copyright &copy; 2026 Juan Ignacio Sivori — MIT License"
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.arithmatex:
+      generic: true
+  - attr_list
+  - def_list
+  - tables
+  - toc:
+      permalink: true
+
+extra_javascript:
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: numpy
+            show_source: false
+            show_root_heading: true
+            show_root_full_path: false
+            merge_init_into_class: true
+            show_signature_annotations: true
+            separate_signature: true
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: getting_started/installation.md
+    - Five-Minute Tutorial: getting_started/tutorial.md
+    - Choosing a Type: getting_started/types.md
+  - Concepts:
+    - Unit System: concepts/units.md
+    - Monte Carlo Propagation: concepts/monte_carlo.md
+    - Correlated Inputs: concepts/correlation.md
+    - Gauge vs Absolute Pressure: concepts/pressure.md
+    - Petroleum Units: concepts/petroleum.md
+  - Unit Reference:
+    - SI Units: reference/units_si.md
+    - Imperial Units: reference/units_imperial.md
+    - Petroleum Units: reference/units_petroleum.md
+    - All Symbols: reference/units_all.md
+  - API Reference:
+    - UnitFloat: api/unitfloat.md
+    - UnitArray: api/unitarray.md
+    - ProbUnitFloat: api/probunitfloat.md
+    - ProbUnitArray: api/probunitarray.md
+    - CorrelatedSource: api/correlatedsource.md
+    - Petroleum Conversions: api/petroleum.md
+    - Math Functions: api/math.md
+  - Examples:
+    - OOIP Calculation: examples/ooip.md
+    - Solution GOR: examples/gor.md
+    - Compressor Power: examples/compressor.md
+    - Correlated Inputs: examples/correlation.md
+    - Petroleum Rs Correlation: examples/petroleum_rs.md
+  - Changelog: changelog.md
