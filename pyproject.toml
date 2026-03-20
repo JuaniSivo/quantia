@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "quantia"
-version = "0.1.0"
+version = "0.2.0"
 requires-python = ">=3.11"
 description = "Unit-aware arithmetic with Monte Carlo uncertainty propagation"
 readme = "README.md"
@@ -25,3 +25,10 @@ where = ["."]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
+
+[project.optional-dependencies]
+docs = [
+    "mkdocs-material>=9.0",
+    "mkdocstrings[python]>=0.24",
+    "mkdocs-autorefs>=0.5",
+]
