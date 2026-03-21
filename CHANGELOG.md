@@ -4,6 +4,19 @@ All notable changes to quantia are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.2.1] - 2026-03-21
+
+### Added
+- Complete type hints on high-value public surface (UnitFloat, UnitArray,
+  ProbUnitFloat, CorrelatedSource, petroleum_conversions)
+- Numpy-style docstrings on all public classes and methods
+- MkDocs documentation site at https://quantia.readthedocs.io
+- Unit reference tables auto-generated from live registry
+- `py.typed` PEP 561 marker for mypy/Pylance/pyright support
+
+### Changed
+- `pyproject.toml`: version 0.2.1, full PyPI classifiers, project URLs
+
 ---
 
 ## [0.2.0] — 2026-03-19
