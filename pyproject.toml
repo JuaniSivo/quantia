@@ -4,21 +4,49 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "quantia"
-version = "0.2.0"
+version = "0.2.1"
 requires-python = ">=3.11"
 description = "Unit-aware arithmetic with Monte Carlo uncertainty propagation"
 readme = "README.md"
 license = { file = "LICENSE" }
 authors = [{ name = "Juan Ignacio Sivori" }]
-keywords = ["units", "dimensional analysis", "monte carlo", "uncertainty"]
+keywords = [
+    "units",
+    "dimensional analysis",
+    "monte carlo",
+    "uncertainty propagation",
+    "petroleum engineering",
+    "physics",
+    "engineering",
+]
 classifiers = [
-    "Programming Language :: Python :: 3",
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Scientific/Engineering",
     "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Operating System :: OS Independent",
+    "Typing :: Typed",
 ]
 
 [project.urls]
-Homepage = "https://github.com/JuaniSivo/quantia" # TODO
+Homepage      = "https://github.com/JuaniSivo/quantia"
+Documentation = "https://quantia.readthedocs.io"
+Changelog     = "https://github.com/JuaniSivo/quantia/blob/main/CHANGELOG.md"
+"Bug Tracker" = "https://github.com/JuaniSivo/quantia/issues"
+
+[project.optional-dependencies]
+docs = [
+    "mkdocs-material>=9.0",
+    "mkdocstrings[python]>=0.24",
+    "mkdocs-autorefs>=0.5",
+    "ruff>=0.4",
+]
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -28,10 +56,3 @@ quantia = ["py.typed"]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
-
-[project.optional-dependencies]
-docs = [
-    "mkdocs-material>=9.0",
-    "mkdocstrings[python]>=0.24",
-    "mkdocs-autorefs>=0.5",
-]
