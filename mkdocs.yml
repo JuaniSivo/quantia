@@ -50,6 +50,7 @@ extra_javascript:
 
 plugins:
   - search
+  - include-markdown 
   - mkdocstrings:
       handlers:
         python:
