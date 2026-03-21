@@ -212,7 +212,7 @@ pip install pytest
 pytest tests/ -v
 ```
 
-56 tests covering scalar arithmetic, array operations, probabilistic math,
+465 tests covering scalar arithmetic, array operations, probabilistic math,
 unit algebra invariants, serialization, and the config system.
 
 ---
