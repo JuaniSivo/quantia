@@ -37,10 +37,10 @@ simple scale factor. Use the dedicated functions:
 ```python
 from quantia.petroleum_conversions import api_to_sg, sg_to_api
 
-api_to_sg(10.0)    # 1.0  — water by definition
-api_to_sg(35.0)    # 0.8498...  — medium crude
-sg_to_api(1.0)     # 10.0
-sg_to_api(0.85)    # 35.03...
+api_to_sg(10.0)    # UnitFloat 1.0  — water by definition
+api_to_sg(35.0)    # UnitFloat 0.8498...  — medium crude
+sg_to_api(1.0)     # UnitFloat 10.0
+sg_to_api(0.85)    # UnitFloat 35.03...
 
 # Works with ProbUnitFloat too
 with qu.config(seed=0, n_samples=3000):
