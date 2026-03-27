@@ -221,17 +221,52 @@ def cbrt(x):
 def pow(base, exp_val):
     """
     quantia-aware pow(base, exp).
-    exp must be a plain int or float (not a UnitFloat).
     """
+    UnitFloat     = _uf()
+    UnitArray     = _ua()
+    ProbUnitFloat = _puf()
+    ProbUnitArray = _pua()
+
+    if isinstance(exp_val, (UnitFloat, UnitArray, ProbUnitFloat, ProbUnitArray)):
+        if not exp_val._unit.is_dimensionless():
+            raise TypeError(f"exponent must be dimensionless, got unit {exp_val._unit}")
+
     if isinstance(exp_val, (int, float)):
-        UnitFloat     = _uf()
-        UnitArray     = _ua()
-        ProbUnitFloat = _puf()
-        ProbUnitArray = _pua()
         if isinstance(base, (UnitFloat, UnitArray, ProbUnitFloat, ProbUnitArray)):
             return base ** exp_val
         return _math.pow(float(base), exp_val)
-    raise TypeError(f"exponent must be a plain number, got {type(exp_val).__name__!r}")
+
+    if isinstance(exp_val, UnitFloat):
+        if isinstance(base, (UnitFloat, UnitArray, ProbUnitFloat, ProbUnitArray)):
+            return base ** exp_val._value
+        return _math.pow(float(base), exp_val._value)
+    
+    if isinstance(exp_val, ProbUnitFloat):
+        if not base._unit.is_dimensionless(): # base must be dimensionless to apply probabilistic exponentiation
+            raise TypeError(f"base must be dimensionless when exponent is ProbUnitFloat, got unit {base._unit}")
+        if isinstance(base, UnitFloat):
+            a = base._value
+            samples = _array.array('d',(a**b for b in exp_val._samples))
+            return ProbUnitFloat._from_raw(samples=samples, unit="1")
+        if isinstance(base, ProbUnitFloat):
+            if base._n != exp_val._n:
+                raise ValueError("Length of base and exponent samples must match for ProbUnitFloat exponentiation")
+            samples = _array.array('d',(a**b for a,b in zip(base._samples, exp_val._samples)))
+            return ProbUnitFloat._from_raw(samples=samples, unit="1")
+        if isinstance(base, UnitArray):
+            data = _array.array('d',(a**b for a in base._data for b in exp_val._samples))
+            return ProbUnitArray._from_flat(data, "1", len(base._data), exp_val._n)
+        if isinstance(base, ProbUnitArray):
+            if base._n != exp_val._n:
+                raise ValueError("Length of base and exponent samples must match for ProbUnitArray exponentiation")
+            flat = []
+            for r in range(base._len):
+                samples = _array.array('d',(a**b for a,b in zip(base._row(r), exp_val._samples)))
+                flat.extend(samples)
+            return ProbUnitArray._from_flat(flat, "1", base._len, exp_val._n)
+        return ProbUnitFloat._from_raw([_math.pow(float(base), e) for e in exp_val._samples], "1")
+
+    raise TypeError(f"exponent must be a plain number, UnitFloat or ProbUnitFloat, got {type(exp_val).__name__!r}")
 
 # Absolute value
 def fabs(x):

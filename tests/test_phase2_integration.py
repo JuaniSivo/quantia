@@ -250,8 +250,8 @@ class TestApiGravityWorkflow:
     def test_sg_from_api_used_in_density(self):
         # 35 °API crude → SG → density in kg/m³
         api = qu.Q(35.0, "°API")
-        sg  = api_to_sg(api)                     # float
-        rho = qu.Q(sg * 1000.0, "kg/m3")         # water=1000 kg/m³
+        sg  = api_to_sg(api)                           # UnitFloat
+        rho = sg * qu.Q(1000.0, "kg/m3")         # water=1000 kg/m³
 
         assert rho.to("g/cm3").value == pytest.approx(sg, rel=1e-9)
         assert rho.to("sg").value    == pytest.approx(sg, rel=1e-9)
@@ -269,14 +269,14 @@ class TestApiGravityWorkflow:
 
     def test_round_trip_api_sg_api(self):
         for api_val in [10.0, 25.0, 35.0, 45.0, 60.0]:
-            assert sg_to_api(api_to_sg(api_val)) == pytest.approx(
+            assert sg_to_api(api_to_sg(api_val)).value == pytest.approx(
                    api_val, rel=1e-10)
 
     def test_api_to_density_array(self):
         # Array of API measurements → density array
-        apis   = qu.QA([20.0, 30.0, 40.0, 50.0], "1")
-        sgs    = [api_to_sg(a.value) for a in apis]
-        rhos   = qu.QA([sg * 1000.0 for sg in sgs], "kg/m3")
+        apis   = qu.QA([20.0, 30.0, 40.0, 50.0], "°API")
+        sgs    = qu.QA([api_to_sg(a).value for a in apis], "1")
+        rhos   = sgs * qu.Q(1000, "kg/m3")
         # Density must be monotonically decreasing with API
         vals = list(rhos.values)
         assert all(vals[i] > vals[i+1] for i in range(len(vals)-1))
@@ -407,13 +407,13 @@ class TestProbFluidCharacterization:
     def test_prob_api_to_density(self):
         # Uncertain crude API gravity → density distribution
         with qu.config(seed=5, n_samples=3000):
-            api = qu.ProbUnitFloat.normal(35.0, 3.0, "1")
+            api = qu.ProbUnitFloat.normal(35.0, 3.0, "°API")
 
         sg  = api_to_sg(api)              # ProbUnitFloat, dimensionless
-        rho = sg * 1000.0                 # kg/m³ equivalent
+        rho = sg * qu.Q(1000.0, "kg/m3")                 # kg/m³ equivalent
 
         # Mean density at mean API
-        expected_mean_sg = api_to_sg(35.0)
+        expected_mean_sg = api_to_sg(35.0).value
         assert sg.mean().value == pytest.approx(expected_mean_sg, rel=0.03)
 
     def test_prob_sg_to_api_round_trip(self):
