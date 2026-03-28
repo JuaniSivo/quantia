@@ -54,6 +54,7 @@ class UnitArray:
                 raise TypeError(
                     f"UnitArray element {i} must be numeric, got {type(v).__name__!r}")
         self._data = _array.array('d', (float(v) for v in raw))
+        self._len  = len(self._data)
         self._unit = _make_unit(unit)
 
     @property
@@ -257,7 +258,7 @@ class UnitArray:
         return UnitFloat(val, CompoundUnit.dimensionless() if cu.is_dimensionless() else cu)
 
     def __len__(self) -> int:
-        return len(self._data)
+        return self._len
     def __iter__(self) -> Iterator["UnitFloat"]:
         return (UnitFloat(v, self._unit) for v in self._data)
     def __getitem__(self, i: Union[int, slice, list]) -> Union["UnitFloat", "UnitArray"]:

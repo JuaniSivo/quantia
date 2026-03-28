@@ -10,21 +10,33 @@ from quantia._exceptions import IncompatibleUnitsError
 
 class ProbUnitArray:
     def __init__(self, elements: Iterable[ProbUnitFloat]):
-        elems=list(elements)
-        if not elems: raise ValueError("ProbUnitArray requires at least one element")
-        self._unit=elems[0]._unit; self._n=elems[0]._n; self._len=len(elems)
+        elems = list(elements)
+        if not elems:
+            raise ValueError("ProbUnitArray requires at least one element")
+        
+        self._unit = elems[0]._unit
+        self._n    = elems[0]._n
+        self._len  = len(elems)
+        
         flat=[]
-        for i,el in enumerate(elems):
-            if not el._unit.is_compatible(self._unit): raise IncompatibleUnitsError(el._unit,self._unit)
-            if el._n!=self._n: raise ValueError(f"Element {i} has {el._n} samples; expected {self._n}")
-            f=el._unit.si_factor()/self._unit.si_factor()
+        for i, el in enumerate(elems):
+            if not el._unit.is_compatible(self._unit):
+                raise IncompatibleUnitsError(el._unit,self._unit)
+            if el._n != self._n:
+                raise ValueError(f"Element {i} has {el._n} samples; expected {self._n}")
+            f = el._unit.si_factor() / self._unit.si_factor()
             flat.extend(v*f for v in el._samples)
-        self._data=_array.array('d',flat)
+        
+        self._data = _array.array('d',flat)
 
     @classmethod
     def _from_flat(cls,data,unit,length,n):
-        obj=object.__new__(cls); obj._data=data; obj._unit=_make_unit(unit)
-        obj._len=length; obj._n=n; return obj
+        obj = object.__new__(cls)
+        obj._data = data
+        obj._unit = _make_unit(unit)
+        obj._len  = length
+        obj._n    = n
+        return obj
 
     def _row(self,i): return self._data[i*self._n:(i+1)*self._n]
     def __len__(self): return self._len
