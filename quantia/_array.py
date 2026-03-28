@@ -8,6 +8,7 @@ from pathlib import Path
 from quantia._compound import CompoundUnit, _make_unit
 from quantia._scalar import UnitFloat
 from quantia._exceptions import IncompatibleUnitsError
+from quantia._dispatch import _dispatch
 
 
 class UnitArray:
@@ -109,59 +110,51 @@ class UnitArray:
             raise IncompatibleUnitsError(self._unit, tcu)
         f = self._unit.si_factor() / tcu.si_factor()
         return UnitArray((v*f for v in self._data), tcu)
+    
+    # ── Arithmetic ───────────────────────────────────────────────────────────
 
-    def _elem(self, o, op):
-        if isinstance(o, UnitArray):
-            if len(self) != len(o): raise ValueError("Length mismatch")
-            if not self._unit.is_compatible(o._unit): raise IncompatibleUnitsError(self._unit, o._unit)
-            f = o._unit.si_factor() / self._unit.si_factor()
-            return UnitArray((op(a, b*f) for a,b in zip(self._data, o._data)), self._unit)
-        if isinstance(o, UnitFloat):
-            if not self._unit.is_compatible(o.unit): raise IncompatibleUnitsError(self._unit, o.unit)
-            s = o.value * o.unit.si_factor() / self._unit.si_factor()
-            return UnitArray((op(v, s) for v in self._data), self._unit)
-        if isinstance(o, (int,float)):
-            return UnitArray((op(v, float(o)) for v in self._data), self._unit)
-        return NotImplemented
+    def __add__(self, o):      return _dispatch("add",      self, o)
+    def __radd__(self, o):     return _dispatch("add",      o,    self)
+    def __sub__(self, o):      return _dispatch("sub",      self, o)
+    def __rsub__(self, o):     return _dispatch("sub",      o,    self)
+    def __mul__(self, o):      return _dispatch("mul",      self, o)
+    def __rmul__(self, o):     return _dispatch("mul",      o,    self)
+    def __truediv__(self, o):  return _dispatch("truediv",  self, o)
+    def __rtruediv__(self, o): return _dispatch("truediv",  o,    self)
+    def __pow__(self, o):      return _dispatch("pow",      self, o)
+    def __rpow__(self, o):     return _dispatch("pow",      o,    self)
 
-    def _mul_div(self, o, op):
-        if isinstance(o, (UnitArray, UnitFloat)):
-            ou = o._unit
-            ov = o._data if isinstance(o, UnitArray) else [o._value]*len(self._data)
-            cu = op(self._unit, ou)
-            return UnitArray((op(a,b) for a,b in zip(self._data, ov)),
-                             CompoundUnit.dimensionless() if cu.is_dimensionless() else cu)
-        if isinstance(o, (int,float)):
-            return UnitArray((op(v, float(o)) for v in self._data), self._unit)
-        return NotImplemented
-    def __add__(self, o: Union["UnitArray", "UnitFloat", int, float]) -> "UnitArray":
-        return self._elem(o, operator.add)
-    def __radd__(self, o: Union["UnitArray", "UnitFloat", int, float]) -> "UnitArray":
-        return self.__add__(o)
-    def __sub__(self, o: Union["UnitArray", "UnitFloat", int, float]) -> "UnitArray":
-        return self._elem(o, operator.sub)
-    def __rsub__(self, o: Union[int, float]) -> "UnitArray":
-        if isinstance(o, (int,float)):
-            return UnitArray((o-v for v in self._data), self._unit)
-        return NotImplemented
-    def __mul__(self, o: Union["UnitArray", "UnitFloat", int, float]) -> "UnitArray":
-        return self._mul_div(o, operator.mul)
-    def __rmul__(self, o: Union[int, float]) -> "UnitArray":
-        if isinstance(o, (int,float)):
-            return UnitArray((v*o for v in self._data), self._unit)
-        return NotImplemented
-    def __truediv__(self, o: Union["UnitArray", "UnitFloat", int, float]) -> "UnitArray":
-        return self._mul_div(o, operator.truediv)
-    def __rtruediv__(self, o: Union[int, float]) -> "UnitArray":
-        if isinstance(o, (int,float)):
-            return UnitArray((o/v for v in self._data), self._unit.invert())
-        return NotImplemented
-    def __pow__(self, e: Union[int, float]) -> "UnitArray":
-        return UnitArray((v**e for v in self._data), self._unit**e)
+    # unary — no cross-type dispatch needed
     def __neg__(self) -> "UnitArray":
         return UnitArray((-v for v in self._data), self._unit)
     def __abs__(self) -> "UnitArray":
         return UnitArray((abs(v) for v in self._data), self._unit)
+
+    # def _elem(self, o, op):
+    #     if isinstance(o, UnitArray):
+    #         if len(self) != len(o): raise ValueError("Length mismatch")
+    #         if not self._unit.is_compatible(o._unit): raise IncompatibleUnitsError(self._unit, o._unit)
+    #         f = o._unit.si_factor() / self._unit.si_factor()
+    #         return UnitArray((op(a, b*f) for a,b in zip(self._data, o._data)), self._unit)
+    #     if isinstance(o, UnitFloat):
+    #         if not self._unit.is_compatible(o.unit): raise IncompatibleUnitsError(self._unit, o.unit)
+    #         s = o.value * o.unit.si_factor() / self._unit.si_factor()
+    #         return UnitArray((op(v, s) for v in self._data), self._unit)
+    #     if isinstance(o, (int,float)):
+    #         return UnitArray((op(v, float(o)) for v in self._data), self._unit)
+    #     return NotImplemented
+
+    # def _mul_div(self, o, op):
+    #     if isinstance(o, (UnitArray, UnitFloat)):
+    #         ou = o._unit
+    #         ov = o._data if isinstance(o, UnitArray) else [o._value]*len(self._data)
+    #         cu = op(self._unit, ou)
+    #         return UnitArray((op(a,b) for a,b in zip(self._data, ov)),
+    #                          CompoundUnit.dimensionless() if cu.is_dimensionless() else cu)
+    #     if isinstance(o, (int,float)):
+    #         return UnitArray((op(v, float(o)) for v in self._data), self._unit)
+    #     return NotImplemented
+    
     def _cmp(self, o, op):
         if isinstance(o, (UnitArray, UnitFloat)):
             ou = o._unit; ov = o._data if isinstance(o, UnitArray) else [o._value]*len(self._data)
