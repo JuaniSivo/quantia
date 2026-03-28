@@ -5,6 +5,7 @@ import operator
 from quantia._compound import CompoundUnit, _make_unit
 from quantia._registry import get_unit, AffineUnit
 from quantia._exceptions import IncompatibleUnitsError, DimensionError
+from quantia._dispatch import _dispatch
 
 
 class UnitFloat:
@@ -210,50 +211,24 @@ class UnitFloat:
             self._value * self._unit.si_factor() / tcu.si_factor(), tcu)
 
     # ── Arithmetic ───────────────────────────────────────────────────────────
+    # All arithmetic delegates to the unified dispatcher in _dispatch.py.
+    # Plain int/float operands are coerced to UnitFloat("1") inside _dispatch.
 
-    def _coerce(self, o: "UnitFloat") -> float:
-        if not self._unit.is_compatible(o._unit):
-            raise IncompatibleUnitsError(self._unit, o._unit)
-        return o._value * o._unit.si_factor() / self._unit.si_factor()
-    def __add__(self, o: Union["UnitFloat", int, float]) -> "UnitFloat":
-        if isinstance(o, UnitFloat):  return UnitFloat(self._value + self._coerce(o), self._unit)
-        if isinstance(o, (int,float)):return UnitFloat(self._value + o,               self._unit)
-        return NotImplemented
-    def __radd__(self, o: Union["UnitFloat", int, float]) -> "UnitFloat":
-        return self.__add__(o)
-    def __sub__(self, o: Union["UnitFloat", int, float]) -> "UnitFloat":
-        if isinstance(o, UnitFloat):  return UnitFloat(self._value - self._coerce(o), self._unit)
-        if isinstance(o, (int,float)):return UnitFloat(self._value - o,               self._unit)
-        return NotImplemented
-    def __rsub__(self, o: Union[int, float]) -> "UnitFloat":
-        if isinstance(o, (int,float)): return UnitFloat(o - self._value, self._unit)
-        return NotImplemented
-    def __mul__(self, o: Union["UnitFloat", int, float]) -> "UnitFloat":
-        if isinstance(o, UnitFloat):
-            cu = self._unit * o._unit
-            return UnitFloat(self._value * o._value,
-                             CompoundUnit.dimensionless() if cu.is_dimensionless() else cu)
-        if isinstance(o, (int,float)): return UnitFloat(self._value * o, self._unit)
-        return NotImplemented
-    def __rmul__(self, o: Union[int, float]) -> "UnitFloat":
-        if isinstance(o, (int,float)): return UnitFloat(self._value * o, self._unit)
-        return NotImplemented
-    def __truediv__(self, o: Union["UnitFloat", int, float]) -> "UnitFloat":
-        if isinstance(o, UnitFloat):
-            cu = self._unit / o._unit
-            return UnitFloat(self._value / o._value,
-                             CompoundUnit.dimensionless() if cu.is_dimensionless() else cu)
-        if isinstance(o, (int,float)): return UnitFloat(self._value / o, self._unit)
-        return NotImplemented
-    def __rtruediv__(self, o: Union[int, float]) -> "UnitFloat":
-        if isinstance(o, (int,float)): return UnitFloat(o / self._value, self._unit.invert())
-        return NotImplemented
-    def __pow__(self, e: Union[int, float]) -> "UnitFloat":
-        return UnitFloat(self._value**e, self._unit**e)
-    def __neg__(self) -> "UnitFloat":
-        return UnitFloat(-self._value, self._unit)
-    def __abs__(self) -> "UnitFloat":
-        return UnitFloat(abs(self._value), self._unit)
+    def __add__(self, o):      return _dispatch("add",      self, o)
+    def __radd__(self, o):     return _dispatch("add",      o,    self)
+    def __sub__(self, o):      return _dispatch("sub",      self, o)
+    def __rsub__(self, o):     return _dispatch("sub",      o,    self)
+    def __mul__(self, o):      return _dispatch("mul",      self, o)
+    def __rmul__(self, o):     return _dispatch("mul",      o,    self)
+    def __truediv__(self, o):  return _dispatch("truediv",  self, o)
+    def __rtruediv__(self, o): return _dispatch("truediv",  o,    self)
+    def __pow__(self, o):      return _dispatch("pow",      self, o)
+    def __rpow__(self, o):     return _dispatch("pow",      o,    self)
+
+    # unary — no cross-type dispatch needed
+    def __neg__(self):  return UnitFloat(-self._value,     self._unit)
+    def __abs__(self):  return UnitFloat(abs(self._value), self._unit)
+
     def __float__(self) -> float:
         return self._value
     def __int__(self) -> int:
