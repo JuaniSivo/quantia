@@ -6,25 +6,38 @@ from quantia._array import UnitArray
 from quantia._scalar import UnitFloat
 from quantia.prob._scalar import ProbUnitFloat
 from quantia._exceptions import IncompatibleUnitsError
+from quantia._dispatch import _dispatch
 
 
 class ProbUnitArray:
     def __init__(self, elements: Iterable[ProbUnitFloat]):
-        elems=list(elements)
-        if not elems: raise ValueError("ProbUnitArray requires at least one element")
-        self._unit=elems[0]._unit; self._n=elems[0]._n; self._len=len(elems)
+        elems = list(elements)
+        if not elems:
+            raise ValueError("ProbUnitArray requires at least one element")
+        
+        self._unit = elems[0]._unit
+        self._n    = elems[0]._n
+        self._len  = len(elems)
+        
         flat=[]
-        for i,el in enumerate(elems):
-            if not el._unit.is_compatible(self._unit): raise IncompatibleUnitsError(el._unit,self._unit)
-            if el._n!=self._n: raise ValueError(f"Element {i} has {el._n} samples; expected {self._n}")
-            f=el._unit.si_factor()/self._unit.si_factor()
+        for i, el in enumerate(elems):
+            if not el._unit.is_compatible(self._unit):
+                raise IncompatibleUnitsError(el._unit,self._unit)
+            if el._n != self._n:
+                raise ValueError(f"Element {i} has {el._n} samples; expected {self._n}")
+            f = el._unit.si_factor() / self._unit.si_factor()
             flat.extend(v*f for v in el._samples)
-        self._data=_array.array('d',flat)
+        
+        self._data = _array.array('d',flat)
 
     @classmethod
     def _from_flat(cls,data,unit,length,n):
-        obj=object.__new__(cls); obj._data=data; obj._unit=_make_unit(unit)
-        obj._len=length; obj._n=n; return obj
+        obj = object.__new__(cls)
+        obj._data = data
+        obj._unit = _make_unit(unit)
+        obj._len  = length
+        obj._n    = n
+        return obj
 
     def _row(self,i): return self._data[i*self._n:(i+1)*self._n]
     def __len__(self): return self._len
@@ -47,44 +60,49 @@ class ProbUnitArray:
         f=self._unit.si_factor()/tcu.si_factor()
         return ProbUnitArray._from_flat(_array.array('d',(v*f for v in self._data)),tcu,self._len,self._n)
 
-    def _apply(self,o,op,result_unit):
-        if isinstance(o,ProbUnitArray):
-            if len(o)!=self._len: raise ValueError("Length mismatch")
-            f=o._unit.si_factor()/self._unit.si_factor()
-            out=_array.array('d',(op(a,b*f) for a,b in zip(self._data,o._data)))
-        elif isinstance(o,ProbUnitFloat):
-            f=o._unit.si_factor()/self._unit.si_factor(); b=_array.array('d',(v*f for v in o._samples))
-            out=_array.array('d')
-            for i in range(self._len): out.extend(op(a,b[j]) for j,a in enumerate(self._row(i)))
-        elif isinstance(o,(int,float)): out=_array.array('d',(op(v,float(o)) for v in self._data))
-        else: return NotImplemented
-        return ProbUnitArray._from_flat(out,result_unit,self._len,self._n)
+    # def _apply(self,o,op,result_unit):
+    #     if isinstance(o,ProbUnitArray):
+    #         if len(o)!=self._len: raise ValueError("Length mismatch")
+    #         f=o._unit.si_factor()/self._unit.si_factor()
+    #         out=_array.array('d',(op(a,b*f) for a,b in zip(self._data,o._data)))
+    #     elif isinstance(o,ProbUnitFloat):
+    #         f=o._unit.si_factor()/self._unit.si_factor(); b=_array.array('d',(v*f for v in o._samples))
+    #         out=_array.array('d')
+    #         for i in range(self._len): out.extend(op(a,b[j]) for j,a in enumerate(self._row(i)))
+    #     elif isinstance(o,(int,float)): out=_array.array('d',(op(v,float(o)) for v in self._data))
+    #     else: return NotImplemented
+    #     return ProbUnitArray._from_flat(out,result_unit,self._len,self._n)
 
-    def _apply_mul(self,o,op):
-        if isinstance(o,(ProbUnitArray,ProbUnitFloat)):
-            cu=op(self._unit,o._unit); cu=CompoundUnit.dimensionless() if cu.is_dimensionless() else cu
-            return self._apply(o,op,cu)
-        if isinstance(o,(int,float)):
-            out=_array.array('d',(op(v,float(o)) for v in self._data))
-            return ProbUnitArray._from_flat(out,self._unit,self._len,self._n)
-        return NotImplemented
+    # def _apply_mul(self,o,op):
+    #     if isinstance(o,(ProbUnitArray,ProbUnitFloat)):
+    #         cu=op(self._unit,o._unit); cu=CompoundUnit.dimensionless() if cu.is_dimensionless() else cu
+    #         return self._apply(o,op,cu)
+    #     if isinstance(o,(int,float)):
+    #         out=_array.array('d',(op(v,float(o)) for v in self._data))
+    #         return ProbUnitArray._from_flat(out,self._unit,self._len,self._n)
+    #     return NotImplemented
+    
+    # ── Arithmetic ───────────────────────────────────────────────────────────
 
-    def __add__(self,o): return self._apply(o,operator.add,self._unit)
-    def __radd__(self,o): return self.__add__(o)
-    def __sub__(self,o): return self._apply(o,operator.sub,self._unit)
-    def __mul__(self,o): return self._apply_mul(o,operator.mul)
-    def __rmul__(self,o):
-        if isinstance(o,(int,float)):
-            out=_array.array('d',(v*float(o) for v in self._data))
-            return ProbUnitArray._from_flat(out,self._unit,self._len,self._n)
-        return NotImplemented
-    def __truediv__(self,o): return self._apply_mul(o,operator.truediv)
-    def __pow__(self,e):
-        out=_array.array('d',(v**e for v in self._data))
-        return ProbUnitArray._from_flat(out,self._unit**e,self._len,self._n)
+    def __add__(self, o):      return _dispatch("add",      self, o)
+    def __radd__(self, o):     return _dispatch("add",      o,    self)
+    def __sub__(self, o):      return _dispatch("sub",      self, o)
+    def __rsub__(self, o):     return _dispatch("sub",      o,    self)
+    def __mul__(self, o):      return _dispatch("mul",      self, o)
+    def __rmul__(self, o):     return _dispatch("mul",      o,    self)
+    def __truediv__(self, o):  return _dispatch("truediv",  self, o)
+    def __rtruediv__(self, o): return _dispatch("truediv",  o,    self)
+    def __pow__(self, o):      return _dispatch("pow",      self, o)
+    def __rpow__(self, o):     return _dispatch("pow",      o,    self)
+
     def __neg__(self):
-        out=_array.array('d',(-v for v in self._data))
-        return ProbUnitArray._from_flat(out,self._unit,self._len,self._n)
+        return ProbUnitArray._from_flat(
+            _array.array('d', (-v for v in self._data)),
+            self._unit, self._len, self._n)
+    def __abs__(self):
+        return ProbUnitArray._from_flat(
+            _array.array('d', (abs(v) for v in self._data)),
+            self._unit, self._len, self._n)
 
     def _welford_row(self, i: int) -> tuple[float, float]:
         n = 0; mean = 0.0; M2 = 0.0

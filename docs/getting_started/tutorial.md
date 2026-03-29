@@ -33,7 +33,7 @@ qu.Q(100.0, '°C').to('°F')    # UnitFloat(212.0, '°F')
 Gauge and absolute pressure:
 ```python
 qu.Q(0.0,   'psig').to('psia')   # UnitFloat(14.695..., 'psia')
-qu.Q(100.0, 'psig').to('bara')   # UnitFloat(7.895...,  'bara')
+qu.Q(100.0, 'psig').to('bara')   # UnitFloat(7.908...,  'bara')
 ```
 
 ## Exact arrays — UnitArray

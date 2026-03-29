@@ -5,6 +5,7 @@ from quantia._compound import CompoundUnit, _make_unit
 from quantia._scalar import UnitFloat
 from quantia._registry import get_unit, AffineUnit
 from quantia._exceptions import IncompatibleUnitsError, DimensionError
+from quantia._dispatch import _dispatch
 from quantia.prob._distributions import icdf_uniform, icdf_normal, icdf_triangular, icdf_lognormal
 from quantia.prob._copula import _N_SAMPLES
 
@@ -441,79 +442,37 @@ class ProbUnitFloat:
         return ProbUnitFloat._from_raw(
             _array.array('d', (v * f for v in self._samples)), tcu)
 
-    # ── Arithmetic ────────────────────────────────────────────────────────────
+    # ── Arithmetic ───────────────────────────────────────────────────────────
+
+    def __add__(self, o):      return _dispatch("add",      self, o)
+    def __radd__(self, o):     return _dispatch("add",      o,    self)
+    def __sub__(self, o):      return _dispatch("sub",      self, o)
+    def __rsub__(self, o):     return _dispatch("sub",      o,    self)
+    def __mul__(self, o):      return _dispatch("mul",      self, o)
+    def __rmul__(self, o):     return _dispatch("mul",      o,    self)
+    def __truediv__(self, o):  return _dispatch("truediv",  self, o)
+    def __rtruediv__(self, o): return _dispatch("truediv",  o,    self)
+    def __pow__(self, o):      return _dispatch("pow",      self, o)
+    def __rpow__(self, o):     return _dispatch("pow",      o,    self)
+
+    def __neg__(self):
+        return ProbUnitFloat._from_raw(
+            _array.array('d', (-v for v in self._samples)), self._unit)
+    def __abs__(self):
+        return ProbUnitFloat._from_raw(
+            _array.array('d', (abs(v) for v in self._samples)), self._unit)
 
     def _aligned(self, o):
         if not self._unit.is_compatible(o._unit): raise IncompatibleUnitsError(self._unit,o._unit)
         f=o._unit.si_factor()/self._unit.si_factor()
         return self._samples,_array.array('d',(v*f for v in o._samples))
 
-    def _elem(self,o,op,cu=None):
-        a,b=self._aligned(o)
-        return ProbUnitFloat._from_raw(_array.array('d',(op(x,y) for x,y in zip(a,b))),cu or self._unit)
+    # def _elem(self,o,op,cu=None):
+    #     a,b=self._aligned(o)
+    #     return ProbUnitFloat._from_raw(_array.array('d',(op(x,y) for x,y in zip(a,b))),cu or self._unit)
 
-    def _scalar_op(self,s,op,cu=None):
-        return ProbUnitFloat._from_raw(_array.array('d',(op(v,s) for v in self._samples)),cu or self._unit)
-
-    def __add__(self, o: Union["ProbUnitFloat", "UnitFloat", int, float]
-                ) -> "ProbUnitFloat":
-        if isinstance(o,ProbUnitFloat): return self._elem(o,operator.add)
-        if isinstance(o,UnitFloat):     return self.__add__(ProbUnitFloat.from_unitfloat(o,self._n))
-        if isinstance(o,(int,float)):   return self._scalar_op(float(o),operator.add)
-        return NotImplemented
-    def __radd__(self, o: Union["ProbUnitFloat", "UnitFloat", int, float]
-                 ) -> "ProbUnitFloat":
-        if isinstance(o, UnitFloat):
-            return self.__add__(o)
-        return self.__add__(o)
-    def __sub__(self, o: Union["ProbUnitFloat", "UnitFloat", int, float]
-                ) -> "ProbUnitFloat":
-        if isinstance(o,ProbUnitFloat): return self._elem(o,operator.sub)
-        if isinstance(o,UnitFloat):     return self.__sub__(ProbUnitFloat.from_unitfloat(o,self._n))
-        if isinstance(o,(int,float)):   return self._scalar_op(float(o),operator.sub)
-        return NotImplemented
-    def __rsub__(self, o: Union["UnitFloat", int, float]) -> "ProbUnitFloat":
-        if isinstance(o, UnitFloat):
-            return ProbUnitFloat.from_unitfloat(o, self._n).__sub__(self)
-        if isinstance(o, (int, float)):
-            return ProbUnitFloat._from_raw(
-                _array.array('d', (float(o) - v for v in self._samples)), self._unit)
-        return NotImplemented
-    def __mul__(self, o: Union["ProbUnitFloat", "UnitFloat", int, float]
-                ) -> "ProbUnitFloat":
-        if isinstance(o,ProbUnitFloat):
-            cu=self._unit*o._unit; cu=CompoundUnit.dimensionless() if cu.is_dimensionless() else cu
-            return ProbUnitFloat._from_raw(_array.array('d',(a*b for a,b in zip(self._samples,o._samples))),cu)
-        if isinstance(o,UnitFloat):   return self.__mul__(ProbUnitFloat.from_unitfloat(o,self._n))
-        if isinstance(o,(int,float)): return self._scalar_op(float(o),operator.mul)
-        return NotImplemented
-    def __rmul__(self, o: Union["UnitFloat", int, float]) -> "ProbUnitFloat":
-        if isinstance(o, (int, float, UnitFloat)):
-            return self.__mul__(o)
-        return NotImplemented
-    def __truediv__(self, o: Union["ProbUnitFloat", "UnitFloat", int, float]
-                    ) -> "ProbUnitFloat":
-        if isinstance(o,ProbUnitFloat):
-            cu=self._unit/o._unit; cu=CompoundUnit.dimensionless() if cu.is_dimensionless() else cu
-            return ProbUnitFloat._from_raw(_array.array('d',(a/b for a,b in zip(self._samples,o._samples))),cu)
-        if isinstance(o,UnitFloat):   return self.__truediv__(ProbUnitFloat.from_unitfloat(o,self._n))
-        if isinstance(o,(int,float)): return self._scalar_op(float(o),operator.truediv)
-        return NotImplemented
-    def __rtruediv__(self, o: Union["UnitFloat", int, float]) -> "ProbUnitFloat":
-        if isinstance(o, UnitFloat):
-            # UnitFloat / ProbUnitFloat — convert UnitFloat to ProbUnitFloat first
-            return ProbUnitFloat.from_unitfloat(o, self._n).__truediv__(self)
-        if isinstance(o, (int, float)):
-            return ProbUnitFloat._from_raw(
-                _array.array('d', (float(o) / v for v in self._samples)),
-                self._unit.invert())
-        return NotImplemented
-    def __pow__(self, e: Union[int, float]) -> "ProbUnitFloat":
-        return ProbUnitFloat._from_raw(_array.array('d',(v**e for v in self._samples)),self._unit**e)
-    def __neg__(self) -> "ProbUnitFloat":
-        return ProbUnitFloat._from_raw(_array.array('d',(-v for v in self._samples)),self._unit)
-    def __abs__(self) -> "ProbUnitFloat":
-        return ProbUnitFloat._from_raw(_array.array('d',(abs(v) for v in self._samples)),self._unit)
+    # def _scalar_op(self,s,op,cu=None):
+    #     return ProbUnitFloat._from_raw(_array.array('d',(op(v,s) for v in self._samples)),cu or self._unit)
 
     def prob_lt(self, o: Union["ProbUnitFloat", "UnitFloat", int, float]
                 ) -> float:
@@ -525,9 +484,11 @@ class ProbUnitFloat:
         if isinstance(o,(int,float)):
             return sum(v<float(o) for v in self._samples)/self._n
         return NotImplemented
+    
     def prob_gt(self, o: Union["ProbUnitFloat", "UnitFloat", int, float]
                 ) -> float:
         return 1.0-self.prob_lt(o)-self.prob_eq(o)
+    
     def prob_eq(self,o,tol=1e-9):
         if isinstance(o,ProbUnitFloat):
             a,b=self._aligned(o)
