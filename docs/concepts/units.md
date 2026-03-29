@@ -22,9 +22,11 @@ dimensions. quantia checks this automatically:
 ```python
 # Compatible — both reduce to m·s⁻¹
 qu.Q(60.0, 'mph').to('m/s')
+# UnitFloat(26.8224, 'm/s')
 
 # Incompatible — pressure vs length
 qu.Q(1.0, 'Pa') + qu.Q(1.0, 'm')   # → IncompatibleUnitsError
+# IncompatibleUnitsError: Incompatible units: 'Pa' and 'm'
 ```
 
 ## Compound units
@@ -43,7 +45,7 @@ from quantia import register
 from quantia._registry import Unit
 
 register('furlong', Unit('furlong', 'length', 'm', 201.168, 'furlong'))
-qu.Q(8.0, 'furlong').to('km')   # UnitFloat(1.609..., 'km')
+qu.Q(8.0, 'furlong').to('km')   # UnitFloat(1.609344, 'km')
 ```
 
 ## Registering custom tagged units
@@ -56,4 +58,5 @@ register_tagged('Sm3_prod', 'm3', 'produced')   # produced water volumes
 inj  = qu.Q(1000.0, 'Sm3_inj')
 prod = qu.Q(800.0,  'Sm3_prod')
 net  = inj - prod   # → IncompatibleUnitsError — injection ≠ produced
+net  = inj.to_si() - prod.to_si()   # UnitFloat(200.0, 'm^3')
 ```

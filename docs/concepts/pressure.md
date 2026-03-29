@@ -1,9 +1,9 @@
 # Gauge vs Absolute Pressure
 
-Pressure is the most common source of unit errors in petroleum
-engineering. quantia handles gauge and absolute pressure the same way
-it handles temperature — via an **affine unit** that carries both a
-scale factor and an offset.
+Pressure is the most common source of unit errors in engineering.
+quantia handles gauge and absolute pressure the same way it handles
+temperature — via an **affine unit** that carries both a scale factor
+and an offset.
 
 ## The problem
 
@@ -39,11 +39,11 @@ qu.Q(0.0, 'psig').to('Pa')      # UnitFloat(101325.0, 'Pa')
 
 # Typical wellhead pressure
 qu.Q(500.0, 'psig').to('psia')  # UnitFloat(514.695..., 'psia')
-qu.Q(500.0, 'psig').to('bara')  # UnitFloat(35.47...,   'bara')
+qu.Q(500.0, 'psig').to('bara')  # UnitFloat(35.487...,   'bara')
 
 # Reservoir pressure in various units
 qu.Q(3500.0, 'psia').to('MPa')  # UnitFloat(24.13..., 'MPa')
-qu.Q(3500.0, 'psia').to('barg') # UnitFloat(240.6..., 'barg')
+qu.Q(3500.0, 'psia').to('barg') # UnitFloat(240.3..., 'barg')
 ```
 
 ## Ambiguous `psi` and `bar`
@@ -52,6 +52,7 @@ Using plain `psi` or `bar` emits a `UserWarning` and is treated
 as absolute. Always use `psia`/`psig` or `bara`/`barg` explicitly:
 ```python
 qu.Q(100.0, 'psi')   # ⚠ UserWarning: treated as psia
+# UserWarning: Ambiguous: 'psi' treated as 'psia' (absolute). Use 'psia' or 'psig' explicitly.
 qu.Q(100.0, 'psia')  # ✓ no warning
 qu.Q(100.0, 'psig')  # ✓ no warning
 ```

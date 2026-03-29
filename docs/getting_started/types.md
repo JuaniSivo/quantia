@@ -49,6 +49,7 @@ with qu.config(n_samples=2000):
 
 layers.means()       # UnitArray of mean thicknesses
 layers.intervals()   # list of (P2.5, P97.5) tuples
+layers.intervals(0.8)   # list of (P10, P90) tuples
 ```
 
 ## Mixing types

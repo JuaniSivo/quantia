@@ -17,9 +17,10 @@ with qu.config(n_samples=5000, seed=42):
 power_out = efficiency * power_in   # 5000 output samples
 ```
 
-Each sample of `power_out[i] = efficiency[i] × power_in[i]`.
-The output distribution captures how uncertainty in both inputs
-combines.
+Each sample of `efficiency` and `power_in` is multiplied to populate
+`power_out`. For instance the **first** sample of `power_out` equals the
+**first** sample of `efficiency` times the **first** sample of `power_in`
+The output distribution captures how uncertainty in both inputs combines.
 
 ## Reading results
 ```python
@@ -65,5 +66,5 @@ with qu.config(seed=1):
     length = qu.ProbUnitFloat.uniform(2.0, 4.0, 'm')
 
 work = force * length    # ProbUnitFloat in 'J'
-work.mean()              # UnitFloat(..., 'J')
+work.mean()              # UnitFloat(298.63..., 'J')
 ```
