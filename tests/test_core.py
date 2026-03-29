@@ -1,7 +1,7 @@
 """Tests for core scalar, array, and probabilistic arithmetic."""
 import math, pytest
 import quantia as qu
-import quantia.math as mmath
+import quantia.math as qmath
 
 
 # ── UnitFloat arithmetic ──────────────────────────────────────────────────────
@@ -81,33 +81,33 @@ def test_index_list():
 
 # ── quantia.math dispatch ─────────────────────────────────────────────────────
 
-def test_mmath_log10_float():
-    assert mmath.log10(100.0) == pytest.approx(2.0)
+def test_qmath_log10_float():
+    assert qmath.log10(100.0) == pytest.approx(2.0)
 
-def test_mmath_log10_unitfloat():
+def test_qmath_log10_unitfloat():
     x = qu.Q(100.0, "1")
-    r = mmath.log10(x)
+    r = qmath.log10(x)
     assert r.value == pytest.approx(2.0)
 
-def test_mmath_sqrt_preserves_unit():
+def test_qmath_sqrt_preserves_unit():
     x = qu.Q(4.0, "m^2")
-    r = mmath.sqrt(x)
+    r = qmath.sqrt(x)
     assert r.value == pytest.approx(2.0)
     assert str(r.unit) == "m"
 
-def test_mmath_sin_angle():
+def test_qmath_sin_angle():
     x = qu.Q(math.pi / 2, "rad")
-    assert mmath.sin(x).value == pytest.approx(1.0)
+    assert qmath.sin(x).value == pytest.approx(1.0)
 
-def test_mmath_sin_bad_unit():
+def test_qmath_sin_bad_unit():
     from quantia import DimensionError
     with pytest.raises(DimensionError):
-        mmath.sin(qu.Q(1.0, "m"))
+        qmath.sin(qu.Q(1.0, "m"))
 
-def test_mmath_prob_log10():
+def test_qmath_prob_log10():
     with qu.config(seed=1):
         x = qu.ProbUnitFloat.uniform(10.0, 100.0, "1", n=200)
-    r = mmath.log10(x)
+    r = qmath.log10(x)
     assert r.mean().value == pytest.approx(math.log10(55.0), rel=0.1)
 
 

@@ -6,15 +6,15 @@ on UnitFloat, UnitArray, ProbUnitFloat, and ProbUnitArray.
 
 Usage
 -----
-import quantia.math as mmath
+import quantia.math as qmath
 
-mmath.log10(x)   # works for float, UnitFloat, ProbUnitFloat, UnitArray, ProbUnitArray
-mmath.exp(x)
-mmath.sqrt(x)
-mmath.log(x)
-mmath.sin(x)     # expects angle unit on UnitFloat; plain float treated as radians
-mmath.cos(x)
-mmath.tan(x)
+qmath.log10(x)   # works for float, UnitFloat, ProbUnitFloat, UnitArray, ProbUnitArray
+qmath.exp(x)
+qmath.sqrt(x)
+qmath.log(x)
+qmath.sin(x)     # expects angle unit on UnitFloat; plain float treated as radians
+qmath.cos(x)
+qmath.tan(x)
 
 Falls through to stdlib math for plain int / float so existing code
 that does `import quantia.math as math` keeps working.
