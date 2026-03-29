@@ -228,7 +228,7 @@ def bench_correlated_source(n: int):
 
 def bench_rs_correlation(n: int):
     import quantia as qu
-    import quantia.math as mmath
+    import quantia.math as qmath
 
     subsection("Rs correlation (petroleum, full pipeline)", n)
 
@@ -236,13 +236,13 @@ def bench_rs_correlation(n: int):
 
     SG_g = 0.65
     Tsp  = qu.Q(10, "°C").to("°F")
-    Psp  = qu.Q(1, "atm").to("psi")
+    Psp  = qu.Q(1, "atm").to("psia")
 
     with Timer("SG_o = ProbUnitFloat.uniform(0.92, 0.96)", n):
         SG_o = qu.ProbUnitFloat.uniform(0.92, 0.96, "1", n=n)
 
     with Timer("log10(SG_o)", n):
-        l_SGo = mmath.log10(SG_o)
+        l_SGo = qmath.log10(SG_o)
 
     with Timer("full Rs expression", n):
         log_Rst = (a1
@@ -250,7 +250,7 @@ def bench_rs_correlation(n: int):
                  + a3 * math.log10(SG_g)
                  + a4 * math.log10(Psp.value)
                  + a5 * math.log10(Tsp.value))
-        Rst = mmath.exp(log_Rst)
+        Rst = qmath.exp(log_Rst)
 
     with Timer("Rst.mean() + interval(0.95)", n):
         _ = Rst.mean()
@@ -284,7 +284,7 @@ def run_all(sizes=SAMPLE_SIZES):
 def run_cprofile(n: int = 10_000):
     """Detailed cProfile run at a single sample size."""
     import quantia as qu
-    import quantia.math as mmath
+    import quantia.math as qmath
 
     pr = cProfile.Profile()
     pr.enable()
@@ -296,7 +296,7 @@ def run_cprofile(n: int = 10_000):
     speed   = a / b
     force   = c * (a / b)
     energy  = force * a
-    log_e   = mmath.log10(energy)
+    log_e   = qmath.log10(energy)
     _ = log_e.mean()
     _ = log_e.interval(0.95)
 

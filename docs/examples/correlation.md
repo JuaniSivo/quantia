@@ -3,6 +3,7 @@
 When input variables are correlated (e.g. formation thickness and
 porosity tend to move together), independent sampling underestimates
 the spread of the output.  `CorrelatedSource` handles this.
+
 ```python
 import quantia as qu
 

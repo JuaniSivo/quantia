@@ -187,7 +187,7 @@ class CorrelatedSource:
         --------
         >>> src = qu.CorrelatedSource(n_vars=2, rho=0.6)
         >>> phi = src.draw(0, 'triangular', '1', low=0.12, mode=0.18, high=0.25)
-        >>> Bo  = src.draw(1, 'normal', 'Sm3_res', mean=1.25, std=0.05)
+        >>> Bo  = src.draw(1, 'normal', 'm3_res', mean=1.25, std=0.05)
         """
         
         from quantia.prob._scalar import ProbUnitFloat

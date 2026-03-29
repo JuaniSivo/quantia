@@ -22,8 +22,8 @@ class CompoundUnit:
     Examples
     --------
     kg·m/s²          → {"kg":1, "m":1, "s":-2},  label=None
-    Sm3_res/Sm3_st   → {"m3":1, "m3":-1} normally cancels,
-                        but label="Sm3_res/Sm3_st" prevents that.
+    m3_res/m3_sc   → {"m3":1, "m3":-1} normally cancels,
+                        but label="m3_res/m3_sc" prevents that.
     """
 
     def __init__(self,
@@ -64,7 +64,7 @@ class CompoundUnit:
 
     def __truediv__(self, other: "CompoundUnit") -> "CompoundUnit":
         if self._label is not None and other._label is not None:
-            # Same label cancels normally — Sm3_res/Sm3_res → dimensionless
+            # Same label cancels normally — m3_res/m3_res → dimensionless
             if self._label == other._label:
                 m = dict(self._f)
                 for s, e in other._f.items():
@@ -197,11 +197,11 @@ def register_tagged(symbol: str, base_symbol: str, tag: str) -> None:
 
     Example
     -------
-    register_tagged("Sm3_res", "m3", "reservoir")
-    register_tagged("Sm3_st",  "m3", "stock_tank")
+    register_tagged("m3_res", "m3", "reservoir")
+    register_tagged("m3_sc",  "m3", "stock_tank")
 
-    Q(100, "Sm3_res") / Q(1, "Sm3_st")
-    → UnitFloat(100.0, 'Sm3_res/Sm3_st')   # does not cancel to 1
+    Q(100, "m3_res") / Q(1, "m3_sc")
+    → UnitFloat(100.0, 'm3_res/m3_sc)   # does not cancel to 1
     """
     from quantia._registry import Unit
     base = get_unit(base_symbol)

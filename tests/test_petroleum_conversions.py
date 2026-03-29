@@ -6,9 +6,11 @@ All values derived from the API MPMS definition:
 
 Key identities
 --------------
-api_to_sg(10.0)  == 1.0     (water = 10 °API by definition)
-sg_to_api(1.0)   == 10.0    (inverse of above)
-api_to_sg(sg_to_api(x)) == x for all valid x  (round-trip)
+api_to_sg(10.0)  == UnitFloat(1.0, '1')        (water = 10 °API by definition)
+sg_to_api(1.0)   == UnitFloat(10.0, '°API')    (inverse of above)
+api_to_sg(sg_to_api(x)).value == x for x: float          (round-trip)
+api_to_sg(sg_to_api(x))       == x for x: UnitFloat      (round-trip)
+api_to_sg(sg_to_api(x))       == x for x: ProbUnitFloat  (round-trip)
 """
 import math
 import pytest
@@ -22,23 +24,23 @@ class TestApiToSg:
 
     def test_water_definition(self):
         # API MPMS: water = 10 °API = SG 1.0 by definition
-        assert api_to_sg(10.0) == pytest.approx(1.0, rel=1e-10)
+        assert api_to_sg(10.0).value == pytest.approx(1.0, rel=1e-10)
 
     def test_medium_crude(self):
         # 35 °API crude: SG = 141.5 / (35 + 131.5) = 0.8498
-        assert api_to_sg(35.0) == pytest.approx(141.5 / 166.5, rel=1e-10)
+        assert api_to_sg(35.0).value == pytest.approx(141.5 / 166.5, rel=1e-10)
 
     def test_light_crude(self):
         # 45 °API: SG = 141.5 / 176.5 = 0.8017
-        assert api_to_sg(45.0) == pytest.approx(141.5 / 176.5, rel=1e-10)
+        assert api_to_sg(45.0).value == pytest.approx(141.5 / 176.5, rel=1e-10)
 
     def test_heavy_crude(self):
         # 15 °API: SG = 141.5 / 146.5 = 0.9659
-        assert api_to_sg(15.0) == pytest.approx(141.5 / 146.5, rel=1e-10)
+        assert api_to_sg(15.0).value == pytest.approx(141.5 / 146.5, rel=1e-10)
 
     def test_condensate(self):
         # 60 °API condensate: SG = 141.5 / 191.5 = 0.7389
-        assert api_to_sg(60.0) == pytest.approx(141.5 / 191.5, rel=1e-10)
+        assert api_to_sg(60.0).value == pytest.approx(141.5 / 191.5, rel=1e-10)
 
     def test_higher_api_gives_lower_sg(self):
         # Physical sanity: lighter oil has higher API and lower SG
@@ -46,11 +48,11 @@ class TestApiToSg:
 
     def test_zero_api(self):
         # 0 °API: SG = 141.5 / 131.5 = 1.0760
-        assert api_to_sg(0.0) == pytest.approx(141.5 / 131.5, rel=1e-10)
+        assert api_to_sg(0.0).value == pytest.approx(141.5 / 131.5, rel=1e-10)
 
     def test_negative_api(self):
         # Negative API is physically unusual but formula still valid > -131.5
-        assert api_to_sg(-10.0) == pytest.approx(141.5 / 121.5, rel=1e-10)
+        assert api_to_sg(-10.0).value == pytest.approx(141.5 / 121.5, rel=1e-10)
 
     def test_invalid_api_raises(self):
         # API <= -131.5 produces zero or negative SG — must raise
@@ -63,15 +65,15 @@ class TestApiToSg:
         # UnitFloat with °API unit
         api = qu.Q(35.0, "°API")
         result = api_to_sg(api)
-        assert result == pytest.approx(141.5 / 166.5, rel=1e-10)
+        assert result.value == pytest.approx(141.5 / 166.5, rel=1e-10)
 
-    def test_returns_float_for_float_input(self):
+    def test_returns_unitfloat_for_float_input(self):
         result = api_to_sg(35.0)
-        assert isinstance(result, float)
+        assert isinstance(result, qu.UnitFloat)
 
-    def test_returns_float_for_unitfloat_input(self):
+    def test_returns_unitfloat_for_unitfloat_input(self):
         result = api_to_sg(qu.Q(35.0, "°API"))
-        assert isinstance(result, float)
+        assert isinstance(result, qu.UnitFloat)
 
 
 # ── sg_to_api ─────────────────────────────────────────────────────────────────
@@ -80,15 +82,15 @@ class TestSgToApi:
 
     def test_water_definition(self):
         # SG=1.0 → 10 °API (water by definition)
-        assert sg_to_api(1.0) == pytest.approx(10.0, rel=1e-10)
+        assert sg_to_api(1.0).value == pytest.approx(10.0, rel=1e-10)
 
     def test_medium_crude(self):
         # SG=0.85: °API = 141.5/0.85 - 131.5 = 35.03
-        assert sg_to_api(0.85) == pytest.approx(141.5 / 0.85 - 131.5, rel=1e-10)
+        assert sg_to_api(0.85).value == pytest.approx(141.5 / 0.85 - 131.5, rel=1e-10)
 
     def test_heavy_crude(self):
         # SG=0.97: °API = 141.5/0.97 - 131.5 = 14.47
-        assert sg_to_api(0.97) == pytest.approx(141.5 / 0.97 - 131.5, rel=1e-10)
+        assert sg_to_api(0.97).value == pytest.approx(141.5 / 0.97 - 131.5, rel=1e-10)
 
     def test_higher_sg_gives_lower_api(self):
         assert sg_to_api(0.9) < sg_to_api(0.8)
@@ -103,7 +105,7 @@ class TestSgToApi:
 
     def test_unitfloat_input(self):
         result = sg_to_api(qu.Q(0.85, "1"))
-        assert result == pytest.approx(141.5 / 0.85 - 131.5, rel=1e-10)
+        assert result.value == pytest.approx(141.5 / 0.85 - 131.5, rel=1e-10)
 
 
 # ── Round-trip identity ───────────────────────────────────────────────────────
@@ -113,12 +115,12 @@ class TestRoundTrip:
     @pytest.mark.parametrize("api", [0.0, 10.0, 20.0, 35.0, 45.0, 60.0])
     def test_api_sg_api_roundtrip(self, api):
         # api_to_sg → sg_to_api must recover original value
-        assert sg_to_api(api_to_sg(api)) == pytest.approx(api, rel=1e-10)
+        assert sg_to_api(api_to_sg(api)).value == pytest.approx(api, rel=1e-10)
 
     @pytest.mark.parametrize("sg", [0.7, 0.8, 0.85, 0.9, 1.0, 1.05])
     def test_sg_api_sg_roundtrip(self, sg):
         # sg_to_api → api_to_sg must recover original value
-        assert api_to_sg(sg_to_api(sg)) == pytest.approx(sg, rel=1e-10)
+        assert api_to_sg(sg_to_api(sg)).value == pytest.approx(sg, rel=1e-10)
 
 
 # ── ProbUnitFloat dispatch ────────────────────────────────────────────────────
@@ -135,9 +137,9 @@ class TestProbDispatch:
     def test_prob_api_to_sg_mean(self):
         # mean of uniform(30, 40) = 35 → api_to_sg(35) = 141.5/166.5
         with qu.config(seed=42, n_samples=5000):
-            api = qu.ProbUnitFloat.uniform(30.0, 40.0, "1")
+            api = qu.ProbUnitFloat.uniform(30.0, 40.0, "°API")
         result = api_to_sg(api)
-        expected_mean = api_to_sg(35.0)
+        expected_mean = api_to_sg(35.0).value
         assert result.mean().value == pytest.approx(expected_mean, rel=0.02)
 
     def test_prob_sg_to_api_returns_probunitfloat(self):
@@ -152,7 +154,7 @@ class TestProbDispatch:
         with qu.config(seed=1, n_samples=5000):
             sg = qu.ProbUnitFloat.uniform(0.80, 0.90, "1")
         result = sg_to_api(sg)
-        expected_mean = sg_to_api(0.85)
+        expected_mean = sg_to_api(0.85).value
         assert result.mean().value == pytest.approx(expected_mean, rel=0.02)
 
     def test_prob_round_trip_mean(self):

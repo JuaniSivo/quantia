@@ -5,7 +5,7 @@ conditions.  quantia propagates the uncertainty in stock-tank oil
 specific gravity through the full expression in one pass.
 ```python
 import quantia as qu
-import quantia.math as mmath
+import quantia.math as qmath
 
 # ── Correlation constants (Standing 1947) ───────────────────────────────────
 a1, a2, a3, a4, a5 = 0.3818, -5.506, 2.902, 1.327, -0.7355
@@ -22,12 +22,12 @@ with qu.config(n_samples=5000, seed=42):
 # ── Correlation ──────────────────────────────────────────────────────────────
 import math
 log_Rst = (a1
-         + a2 * mmath.log10(SG_o)
+         + a2 * qmath.log10(SG_o)
          + a3 * math.log10(SG_g)
          + a4 * math.log10(Psp.value)
          + a5 * math.log10(Tsp.value))
 
-Rst = mmath.exp(log_Rst)   # ProbUnitFloat, dimensionless
+Rst = qmath.exp(log_Rst)   # ProbUnitFloat, dimensionless
 
 # ── Results ──────────────────────────────────────────────────────────────────
 print(f"Rs  mean : {Rst.mean():.4g}")

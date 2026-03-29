@@ -12,8 +12,8 @@ petroleum meaning through calculations.
 
 | Symbol | Base | Tag | Use for |
 |--------|------|-----|---------|
-| `Sm3_res` | `m3` | reservoir | Reservoir pore/fluid volumes |
-| `Sm3_st` | `m3` | stock_tank | Stock-tank oil volumes |
+| `m3_res` | `m3` | reservoir | Reservoir pore/fluid volumes |
+| `m3_sc` | `m3` | standar condition | Stock-tank oil volumes |
 | `scf_res` | `scf` | reservoir | Reservoir gas volumes |
 | `scf_st` | `scf` | stock_tank | Stock-tank gas volumes |
 | `STB` | `bbl` | stock_tank | Stock-tank barrels |
@@ -72,11 +72,11 @@ petroleum meaning through calculations.
 | Symbol | Name | SI unit | Factor to SI |
 |--------|------|---------|-------------|
 | `RB`  | barrel [reservoir] | `m^3` | 0.158987 |
-| `Sm3_res`  | cubic metre [reservoir] | `m^3` | 1 |
+| `m3_res`  | cubic metre [reservoir] | `m^3` | 1 |
 
 ## Volume Stock Tank
 
 | Symbol | Name | SI unit | Factor to SI |
 |--------|------|---------|-------------|
-| `Sm3_st`  | cubic metre [stock_tank] | `m^3` | 1 |
+| `m3_sc`  | cubic metre [standard_condition] | `m^3` | 1 |
 | `STB`  | barrel [stock_tank] | `m^3` | 0.158987 |

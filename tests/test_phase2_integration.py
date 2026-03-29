@@ -91,18 +91,18 @@ class TestVolumetricOOIP:
 
     def test_OOIP_SI_then_convert(self):
         # Reservoir: 2 km² × 15 m thick × 20% porosity × 75% oil sat
-        # Bo = 1.25 Sm3_res/Sm3_st
+        # Bo = 1.25 m3_res/m3_sc
         A   = qu.Q(2e6,  "m2")       # 2 km²
         h   = qu.Q(15.0, "m")
         phi = 0.20
         Sw  = 0.25
-        Bo  = qu.Q(1.25, "Sm3_res") / qu.Q(1.0, "Sm3_st")
+        Bo  = qu.Q(1.25, "m3_res") / qu.Q(1.0, "m3_sc")
 
         Vp   = A * h * phi            # m³ — pore volume
-        Vp_r = qu.Q(Vp.value, "Sm3_res")   # tag as reservoir volume
+        Vp_r = qu.Q(Vp.value, "m3_res")   # tag as reservoir volume
         ooip = Vp_r * (1 - Sw) / Bo
 
-        # Expected: 2e6 × 15 × 0.20 × 0.75 / 1.25 = 3 600 000 Sm3_st
+        # Expected: 2e6 × 15 × 0.20 × 0.75 / 1.25 = 3 600 000 m3_sc
         assert ooip.to("m3").value == pytest.approx(3_600_000.0, rel=1e-9)
 
     def test_OOIP_in_MMbbl(self):
@@ -110,9 +110,9 @@ class TestVolumetricOOIP:
         h   = qu.Q(20.0, "m")
         phi = 0.18
         Sw  = 0.30
-        Bo  = qu.Q(1.3, "Sm3_res") / qu.Q(1.0, "Sm3_st")
+        Bo  = qu.Q(1.3, "m3_res") / qu.Q(1.0, "m3_sc")
 
-        Vp_r = qu.Q(A.value * h.value * phi, "Sm3_res")
+        Vp_r = qu.Q(A.value * h.value * phi, "m3_res")
         ooip = Vp_r * (1 - Sw) / Bo
 
         expected_m3  = 5e6 * 20.0 * 0.18 * 0.70 / 1.3
@@ -124,9 +124,9 @@ class TestVolumetricOOIP:
     def test_OOIP_acre_ft_basis(self):
         # Common US calculation: pore volume in acre-ft
         Vp  = qu.Q(10_000.0, "acre_ft")     # 10 000 acre-ft pore volume
-        Vp_r = qu.Q(Vp.to("m3").value, "Sm3_res")
+        Vp_r = qu.Q(Vp.to("m3").value, "m3_res")
         Sw  = 0.25
-        Bo  = qu.Q(1.2, "Sm3_res") / qu.Q(1.0, "Sm3_st")
+        Bo  = qu.Q(1.2, "m3_res") / qu.Q(1.0, "m3_sc")
         ooip = Vp_r * (1 - Sw) / Bo
 
         # Result in STB
@@ -141,22 +141,22 @@ class TestVolumetricOGIP:
     """
     OGIP = (A × h × φ × (1-Sw)) / Bg
 
-    Bg at reservoir conditions expressed as Sm3_res/Sm3_st.
+    Bg at reservoir conditions expressed as m3_res/m3_sc.
     """
 
     def test_OGIP_in_Bscf(self):
         # Reservoir: 10 km² × 30 m × 15% porosity × 80% gas sat
-        # Bg = 0.004 Sm3_res/Sm3_st (typical for moderate depth)
+        # Bg = 0.004 m3_res/m3_sc (typical for moderate depth)
         A   = qu.Q(10e6, "m2")
         h   = qu.Q(30.0, "m")
         phi = 0.15
         Sw  = 0.20
-        Bg  = qu.Q(0.004, "Sm3_res") / qu.Q(1.0, "Sm3_st")
+        Bg  = qu.Q(0.004, "m3_res") / qu.Q(1.0, "m3_sc")
 
-        Vp_r = qu.Q(A.value * h.value * phi, "Sm3_res")
+        Vp_r = qu.Q(A.value * h.value * phi, "m3_res")
         ogip = Vp_r * (1 - Sw) / Bg
 
-        # Expected: 10e6 × 30 × 0.15 × 0.80 / 0.004 = 9e9 Sm3_st
+        # Expected: 10e6 × 30 × 0.15 × 0.80 / 0.004 = 9e9 m3_sc
         assert ogip.to("m3").value == pytest.approx(9e9, rel=1e-9)
 
         # Convert to Bscf
@@ -165,10 +165,10 @@ class TestVolumetricOGIP:
 
     def test_OGIP_smaller_Bg_gives_larger_OGIP(self):
         # Physical: deeper (higher pressure) → smaller Bg → more gas in place
-        Vp_r = qu.Q(1e8, "Sm3_res")
+        Vp_r = qu.Q(1e8, "m3_res")
         Sw   = 0.25
-        Bg_shallow = qu.Q(0.010, "Sm3_res") / qu.Q(1.0, "Sm3_st")
-        Bg_deep    = qu.Q(0.003, "Sm3_res") / qu.Q(1.0, "Sm3_st")
+        Bg_shallow = qu.Q(0.010, "m3_res") / qu.Q(1.0, "m3_sc")
+        Bg_deep    = qu.Q(0.003, "m3_res") / qu.Q(1.0, "m3_sc")
 
         ogip_shallow = (Vp_r * (1 - Sw) / Bg_shallow).to("m3").value
         ogip_deep    = (Vp_r * (1 - Sw) / Bg_deep).to("m3").value
@@ -180,30 +180,30 @@ class TestVolumetricOGIP:
 class TestGORWorkflow:
 
     def test_GOR_field_to_SI_to_field(self):
-        # 500 scf/STB → SI (m³/m³) → Sm3/Sm3 (=SI for these units)
-        gor = qu.Q(500.0, "scf_res") / qu.Q(1.0, "STB")
+        # 500 scf/STB → SI (m³/m³) → m3/m3 (=SI for these units)
+        gor = qu.Q(500.0, "cf_res") / qu.Q(1.0, "STB")
         si  = gor.si_value()
         expected = 500.0 * _SCF / _BBL
         assert si == pytest.approx(expected, rel=1e-9)
 
-    def test_GOR_Mscf_STB_equals_1000_scf_STB(self):
-        gor_mscf = qu.Q(1.0,      "Mscf_res") / qu.Q(1.0, "STB")
-        gor_scf  = qu.Q(1_000.0,  "scf_res")  / qu.Q(1.0, "STB")
+    def test_GOR_MscfB_equals_1000_scfB(self):
+        gor_mscf = qu.Q(1.0,      "Mcf_res") / qu.Q(1.0, "STB")
+        gor_scf  = qu.Q(1_000.0,  "cf_res")  / qu.Q(1.0, "STB")
         assert gor_mscf.si_value() == pytest.approx(gor_scf.si_value(), rel=1e-9)
 
     def test_GOR_classification(self):
         # Physical GOR ranges:
-        # < 200 Sm3/Sm3 → black oil / volatile oil
-        # > 600 Sm3/Sm3 → gas condensate
-        def classify(gor_sm3_sm3):
-            if gor_sm3_sm3 < 200:
+        # < 200 m3/m3 → black oil / volatile oil
+        # > 600 m3/m3 → gas condensate
+        def classify(gor_m3_m3):
+            if gor_m3_m3 < 200:
                 return "oil"
-            elif gor_sm3_sm3 > 600:
+            elif gor_m3_m3 > 600:
                 return "condensate"
             return "volatile"
 
-        gor_oil  = (qu.Q(100.0, "Sm3_res") / qu.Q(1.0, "Sm3_st")).si_value()
-        gor_cond = (qu.Q(800.0, "Sm3_res") / qu.Q(1.0, "Sm3_st")).si_value()
+        gor_oil  = (qu.Q(100.0, "m3_res") / qu.Q(1.0, "m3_sc")).si_value()
+        gor_cond = (qu.Q(800.0, "m3_res") / qu.Q(1.0, "m3_sc")).si_value()
         assert classify(gor_oil)  == "oil"
         assert classify(gor_cond) == "condensate"
 
@@ -250,8 +250,8 @@ class TestApiGravityWorkflow:
     def test_sg_from_api_used_in_density(self):
         # 35 °API crude → SG → density in kg/m³
         api = qu.Q(35.0, "°API")
-        sg  = api_to_sg(api)                     # float
-        rho = qu.Q(sg * 1000.0, "kg/m3")         # water=1000 kg/m³
+        sg  = api_to_sg(api)                           # UnitFloat
+        rho = sg * qu.Q(1000.0, "kg/m3")         # water=1000 kg/m³
 
         assert rho.to("g/cm3").value == pytest.approx(sg, rel=1e-9)
         assert rho.to("sg").value    == pytest.approx(sg, rel=1e-9)
@@ -269,14 +269,14 @@ class TestApiGravityWorkflow:
 
     def test_round_trip_api_sg_api(self):
         for api_val in [10.0, 25.0, 35.0, 45.0, 60.0]:
-            assert sg_to_api(api_to_sg(api_val)) == pytest.approx(
+            assert sg_to_api(api_to_sg(api_val)).value == pytest.approx(
                    api_val, rel=1e-10)
 
     def test_api_to_density_array(self):
         # Array of API measurements → density array
-        apis   = qu.QA([20.0, 30.0, 40.0, 50.0], "1")
-        sgs    = [api_to_sg(a.value) for a in apis]
-        rhos   = qu.QA([sg * 1000.0 for sg in sgs], "kg/m3")
+        apis   = qu.QA([20.0, 30.0, 40.0, 50.0], "°API")
+        sgs    = qu.QA([api_to_sg(a).value for a in apis], "1")
+        rhos   = sgs * qu.Q(1000, "kg/m3")
         # Density must be monotonically decreasing with API
         vals = list(rhos.values)
         assert all(vals[i] > vals[i+1] for i in range(len(vals)-1))
@@ -357,15 +357,15 @@ class TestMonteCarloOOIP:
         with qu.config(seed=42, n_samples=5000):
             phi = qu.ProbUnitFloat.triangular(0.12, 0.18, 0.25, "1")
             Sw  = qu.ProbUnitFloat.triangular(0.20, 0.28, 0.35, "1")
-            Bo  = qu.ProbUnitFloat.normal(1.25, 0.05, "Sm3_res")
+            Bo  = qu.ProbUnitFloat.normal(1.25, 0.05, "m3_res")
 
         A = qu.Q(3e6, "m2")
         h = qu.Q(18.0, "m")
 
         Vp_val = A.value * h.value   # m² × m = m³
-        Vp_r   = qu.Q(Vp_val, "Sm3_res") * phi
+        Vp_r   = qu.Q(Vp_val, "m3_res") * phi
 
-        Bo_ratio = Bo / qu.Q(1.0, "Sm3_st")
+        Bo_ratio = Bo / qu.Q(1.0, "m3_sc")
         ooip = Vp_r * (1 - Sw) / Bo_ratio
 
         mean_ooip = ooip.mean().to("MMbbl").value
@@ -385,11 +385,11 @@ class TestMonteCarloOOIP:
         with qu.config(seed=0, n_samples=3000):
             src = qu.CorrelatedSource(n_vars=2, rho=0.6)
             phi = src.draw(0, "triangular", "1", low=0.12, mode=0.18, high=0.25)
-            Bo  = src.draw(1, "normal",     "Sm3_res", mean=1.25, std=0.05)
+            Bo  = src.draw(1, "normal",     "m3_res", mean=1.25, std=0.05)
 
         Sw     = 0.25
-        Vp_r   = qu.Q(3e6 * 18.0, "Sm3_res") * phi
-        Bo_rat = Bo / qu.Q(1.0, "Sm3_st")
+        Vp_r   = qu.Q(3e6 * 18.0, "m3_res") * phi
+        Bo_rat = Bo / qu.Q(1.0, "m3_sc")
         ooip   = Vp_r * (1 - Sw) / Bo_rat
 
         assert ooip.mean().to("MMbbl").value > 0
@@ -407,13 +407,13 @@ class TestProbFluidCharacterization:
     def test_prob_api_to_density(self):
         # Uncertain crude API gravity → density distribution
         with qu.config(seed=5, n_samples=3000):
-            api = qu.ProbUnitFloat.normal(35.0, 3.0, "1")
+            api = qu.ProbUnitFloat.normal(35.0, 3.0, "°API")
 
         sg  = api_to_sg(api)              # ProbUnitFloat, dimensionless
-        rho = sg * 1000.0                 # kg/m³ equivalent
+        rho = sg * qu.Q(1000.0, "kg/m3")                 # kg/m³ equivalent
 
         # Mean density at mean API
-        expected_mean_sg = api_to_sg(35.0)
+        expected_mean_sg = api_to_sg(35.0).value
         assert sg.mean().value == pytest.approx(expected_mean_sg, rel=0.03)
 
     def test_prob_sg_to_api_round_trip(self):

@@ -114,6 +114,10 @@ def register(symbol: str, unit: Unit, overwrite: bool = False) -> None:
             "Use overwrite=True to replace it intentionally."
         )
     _REGISTRY[symbol] = unit
+    
+    if overwrite:
+        from quantia._compound import _UNIT_CACHE
+        _UNIT_CACHE.pop(symbol, None)
 
 
 def get_unit(symbol: str) -> Unit:
