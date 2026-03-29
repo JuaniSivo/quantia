@@ -37,10 +37,10 @@ import quantia as qu
 
 d = qu.Q(100.0, "m")
 t = qu.Q(9.81,  "s")
-v = d / t                        # UnitFloat(10.19…, 'm/s')
+v = d / t                        # UnitFloat(10.19..., 'm/s')
 
-v.to("km/h")                     # unit conversion
-v.to_si()                        # always works
+v.to("km/h")                     # unit conversion: UnitFloat(36.69..., 'km/h')
+v.to_si()                        # always works: UnitFloat(10.19...,     'm/s')
 
 qu.Q(100.0, "°C").to("K")        # UnitFloat(373.15, 'K')
 qu.Q(100.0, "°C").to("°F")       # UnitFloat(212.0, '°F')
@@ -51,27 +51,29 @@ qu.Q(100.0, "°C").to("°F")       # UnitFloat(212.0, '°F')
 ```python
 heights = qu.QA([1.75, 1.80, 1.65], "m")
 
-heights.mean()                   # UnitFloat(1.733…, 'm')
-heights.sum()
-heights.to("cm")
+heights.mean()                   # UnitFloat(1.73..., 'm')
+heights.sum()                    # UnitFloat(5.2,     'm')
+heights.to("cm")                 # UnitArray([175.0, 180.0, 165.0], 'cm')
 
 # Boolean mask filtering
-tall = heights[heights > qu.Q(1.78, "m")]   # UnitArray([1.80], 'm')
+tall = heights[heights > qu.Q(1.78, "m")]   # UnitArray([1.8], 'm')
 ```
 
 ### Uncertainty propagation
 
 ```python
 with qu.config(n_samples=2000, seed=42):
-    efficiency = qu.ProbUnitFloat.uniform(0.88, 0.95, "1")
-    power_in   = qu.ProbUnitFloat.normal(500.0, 10.0, "W")
+    efficiency = qu.ProbUnitFloat.uniform(0.88, 0.95, "1")  # ProbUnitFloat(mean=0.9154, std=0.01999, unit='1', n=2000)
+    power_in   = qu.ProbUnitFloat.normal(500.0, 10.0, "W")  # ProbUnitFloat(mean=500.1,  std=10.02,   unit='W', n=2000)
 
-power_out = efficiency * power_in
+power_out = efficiency * power_in # ProbUnitFloat(mean=457.8, std=13.54, unit='W', n=2000
 
-power_out.mean()                 # UnitFloat(~457 W)
-power_out.std()
-power_out.interval(0.95)         # (lo, hi) 95% CI as UnitFloat tuple
-power_out.percentile(10)
+power_out.mean()                  # UnitFloat(457.76..., 'W')
+power_out.std()                   # UnitFloat(13.54...,  'W')
+
+# (lo, hi) 95% CI as UnitFloat tuple
+power_out.interval(0.95)          # (UnitFloat(432.72...,'W'), UnitFloat(484.46..., 'W'))
+power_out.percentile(10)          # UnitFloat(439.82..., 'W')
 ```
 
 ### Correlated inputs
@@ -84,7 +86,9 @@ src = qu.CorrelatedSource(n_vars=2, rho=0.8)
 x = src.draw(0, "normal",  "m",  mean=10,   std=1)
 y = src.draw(1, "uniform", "s",  low=1,     high=3)
 
-speed = x / y                    # ProbUnitFloat, correlated samples
+speed = x / y       # ProbUnitFloat, correlated samples
+
+speed               # ProbUnitFloat(mean=5.385, std=1.325, unit='m/s', n=1000)
 ```
 
 Or pass a full correlation matrix:
@@ -105,9 +109,16 @@ quantia parses unit strings with a full tokenizer:
 
 ```python
 qu.Q(9.81,  "m/s^2")
+# UnitFloat(9.81, 'm/s^2')
+
 qu.Q(1.0,   "kg·m/s^2")          # · or * for multiplication
+# UnitFloat(1.0, 'N')
+
 qu.Q(4.0,   "m^(1/2)")           # rational exponents
+# UnitFloat(4.0, 'm^(1/2)')
+
 qu.Q(1.0,   "kg/m^2/s")          # chained division
+# UnitFloat(1.0, 'kg/m^2·s')
 ```
 
 ### Built-in unit domains
@@ -128,11 +139,11 @@ Dimensionally equal but semantically distinct units that won't cancel:
 ```python
 from quantia import register_tagged
 
-register_tagged("Sm3_res", "m3", "reservoir")
-register_tagged("Sm3_st",  "m3", "stock_tank")
+register_tagged("m3_res", "m3", "reservoir")
+register_tagged("m3_sc",  "m3", "standar condition")
 
-Rs = qu.Q(150.0, "Sm3_res") / qu.Q(1.0, "Sm3_st")
-# UnitFloat(150.0, 'Sm3_res/Sm3_st')  — does not reduce to 1
+Bo = qu.Q(1.1, "m3_res") / qu.Q(1.0, "m3_sc")
+# UnitFloat(1.1, 'm3_res/m3_sc')  — does not reduce to 1
 ```
 
 ---
@@ -142,14 +153,21 @@ Rs = qu.Q(150.0, "Sm3_res") / qu.Q(1.0, "Sm3_st")
 `quantia.math` is a drop-in replacement for the stdlib `math` module that dispatches transparently on all four types:
 
 ```python
-import quantia.math as mmath
+import quantia.math as qmath
 
-mmath.log10(x)    # float, UnitFloat, ProbUnitFloat, UnitArray, ProbUnitArray
-mmath.exp(x)
-mmath.sqrt(x)     # preserves units: sqrt(m^2) → m
-mmath.sin(x)      # requires angle unit on UnitFloat; raises DimensionError otherwise
-mmath.cos(x)
-mmath.atan2(y, x)
+x = qu.QA([2, 3], "m^2")
+# UnitArray([2.0, 3.0], 'm^2')
+
+qmath.log10(x)    # float, UnitFloat, ProbUnitFloat, UnitArray, ProbUnitArray
+# UnitArray([0.301..., 0.477...], '1')
+qmath.exp(x)
+# UnitArray([7.38..., 20.08...], '1')
+qmath.sqrt(x)     # preserves units: sqrt(m^2) → m
+# UnitArray([1.41..., 1.73...], 'm')
+qmath.sin(x)
+# UnitArray([0.909..., 0.141...], '1')
+qmath.cos(x)
+# UnitArray([-0.416..., -0.989...], '1')
 ```
 
 ---
@@ -172,9 +190,15 @@ with qu.config(n_samples=5000, seed=42):
 qu.save(power_out, "result.json")
 result = qu.load("result.json")
 
+result
+# ProbUnitFloat(mean=457.8, std=13.54, unit='W', n=2000)
+
 # Dict round-trip
 d   = power_out.to_dict()
 pf2 = qu.from_dict(d)
+
+pf2
+# ProbUnitFloat(mean=457.8, std=13.54, unit='W', n=2000)
 ```
 
 ### CSV export
@@ -182,6 +206,10 @@ pf2 = qu.from_dict(d)
 ```python
 # UnitArray — single column of values
 heights.to_csv("heights.csv")
+
+t1 = qu.QP(2, 4, "m", 10)
+t2 = qu.QP(3, 4, "m", 10)
+t3 = qu.QP(2, 5, "m", 10)
 
 # ProbUnitArray — mean, std, CI bounds per element
 layer_thicknesses = qu.QPA([t1, t2, t3])   # must be same unit
@@ -198,8 +226,8 @@ quantia raises named exceptions from `quantia._exceptions`:
 ```python
 from quantia import IncompatibleUnitsError, DimensionError, UnknownUnitError
 
-qu.Q(1.0, "m") + qu.Q(1.0, "s")   # → IncompatibleUnitsError
-mmath.sin(qu.Q(1.0, "m"))          # → DimensionError
+qu.Q(1.0, "m") + qu.Q(1.0, "s")    # → IncompatibleUnitsError
+qmath.sin(qu.Q(1.0, "m"))          # → DimensionError
 qu.Q(1.0, "furlongs")              # → UnknownUnitError
 ```
 
@@ -229,11 +257,11 @@ Typical throughput on a modern laptop (stdlib backend, no numpy):
 
 | Operation | n=10k |
 |-----------|-------|
-| Scalar arithmetic chain | ~1ms |
+| Scalar arithmetic chain | ~10ms |
 | `ProbUnitFloat.normal` construction | ~4ms |
 | `mean()` | ~0.1ms |
 | `interval(0.95)` | ~0ms (cached sort) |
-| Gaussian copula k=3 | ~33ms |
+| Gaussian copula k=5 | ~50ms |
 
 ---
 

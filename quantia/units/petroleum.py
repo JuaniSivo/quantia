@@ -11,7 +11,7 @@ Notes
 -----
 - m3 is registered in si.py as an atomic alias for m^3.
 - psi_g is a deprecated alias — redirects to psig with a warning.
-- Opaque named ratio units (Sm3/Sm3, scf/STB, Mscf/STB) removed.
+- Opaque named ratio units (m3/m3, scf/STB, Mscf/STB) removed.
   Use register_tagged() units for GOR and FVF calculations.
 """
 from quantia._registry import Unit, register, _AMBIGUOUS_UNITS
@@ -23,26 +23,26 @@ def _reg(sym, name, quantity, si_unit, to_si):
 
 
 # ── Volume ────────────────────────────────────────────────────────────────────
-_reg("bbl",    "barrel",           "volume", "m^3", 0.158987294928)
+_reg("bbl",   "barrel",           "volume", "m^3", 0.158987294928)
 # API MPMS Ch.11: 1 bbl = 42 US gal = 0.158 987 294 928 m³ (exact)
-
-_reg("Mbbl",   "thousand barrels", "volume", "m^3", 158.987294928)
-_reg("MMbbl",  "million barrels",  "volume", "m^3", 158_987.294928)
+_reg("Mbbl",  "thousand barrels", "volume", "m^3", 158.987294928)
+_reg("MMbbl", "million barrels",  "volume", "m^3", 158_987.294928)
 
 # Gas volume at standard conditions
 _reg("scf",   "standard cubic foot",     "gas_volume", "m^3", 0.3048**3)
 # Exact: 1 scf = 1 ft³ — use identical value to ft3 in imperial.py
-_reg("Mscf",  "thousand standard cu ft", "gas_volume", "m^3", 0.3048**3 * 1_000)
-_reg("MMscf", "million standard cu ft",  "gas_volume", "m^3", 0.3048**3 * 1_000_000)
+_reg("Mscf",  "thousand standard cu ft", "gas_volume", "m^3", 0.3048**3 * 1e3)
+_reg("MMscf", "million standard cu ft",  "gas_volume", "m^3", 0.3048**3 * 1e6)
 _reg("Bscf",  "billion standard cu ft",  "gas_volume", "m^3", 0.3048**3 * 1e9)
 _reg("Tscf",  "trillion standard cu ft", "gas_volume", "m^3", 0.3048**3 * 1e12)
 
 # Metric gas volume
-_reg("MMm3",   "million cubic metres",       "volume",     "m^3", 1e6)
+_reg("k(m3)",  "thousand cubic metres",     "volume", "m^3", 1e3)
+_reg("MMm3",   "million cubic metres",      "volume", "m^3", 1e6)
 # 1 MMm3 = 1e6 m³ (exact)
 
 # Reservoir volume
-_reg("acre_ft", "acre-foot",                 "volume",     "m^3", 1_233.48)
+_reg("acre_ft", "acre-foot",                 "volume", "m^3", 1_233.48)
 # 1 acre-ft = 43 560 ft³ = 1 233.48 m³ (NIST: 1.233 489 E+03 m³)
 
 # ── Pressure ──────────────────────────────────────────────────────────────────
@@ -61,18 +61,15 @@ _reg("kg/cm2",  "kilogram-force per square centimetre", "pressure", "Pa", 9.806_
 _reg("kgf/cm2", "kilogram-force per square centimetre", "pressure", "Pa", 9.806_65e4)
 
 # ── Flow rate ─────────────────────────────────────────────────────────────────
-_reg("bbl/day",    "barrels per day",              "flow_rate", "m^3/s",
-     0.158987294928 / 86_400)
-_reg("Mbbl/day",   "thousand barrels per day",     "flow_rate", "m^3/s",
-     158.987294928  / 86_400)
-_reg("MMbbl/day",  "million barrels per day",      "flow_rate", "m^3/s",
-     158_987.294928 / 86_400)
+_reg("bbl/day",   "barrels per day",          "flow_rate", "m^3/s", 0.158987294928 / 86_400)
+_reg("Mbbl/day",  "thousand barrels per day", "flow_rate", "m^3/s", 158.987294928  / 86_400)
+_reg("MMbbl/day", "million barrels per day",  "flow_rate", "m^3/s", 158_987.294928 / 86_400)
 # 1 MMbbl/day = 1e6 bbl/day
 
-_reg("m3/day",     "cubic metres per day",         "flow_rate", "m^3/s",
-     1.0            / 86_400)
-_reg("m3/h",       "cubic metres per hour",        "flow_rate", "m^3/s",
-     1.0            / 3_600)
+_reg("m3/day",    "cubic metres per day",     "flow_rate", "m^3/s", 1.0            / 86_400)
+_reg("k(m3)/day", "cubic metres per day",     "flow_rate", "m^3/s", 1000           / 86_400)
+_reg("Mm3/day",   "cubic metres per day",     "flow_rate", "m^3/s", 1000000        / 86_400)
+_reg("m3/h",      "cubic metres per hour",    "flow_rate", "m^3/s", 1.0            /  3_600)
 # 1 m³/h = 1/3600 m³/s
 
 _reg("Mscf/day",  "thousand scf per day",  "flow_rate", "m^3/s", 0.3048**3 * 1_000 / 86_400)
@@ -114,18 +111,29 @@ register("°API", Unit("API gravity", "api_gravity", "1", 1.0, "°API"))
 
 # ── Semantic tagged units ─────────────────────────────────────────────────────
 # Reservoir and stock-tank cubic metres
-register_tagged("Sm3_res", "m3",   "reservoir")
-register_tagged("Sm3_st",  "m3",   "stock_tank")
+register_tagged("m3_res",   "m3", "reservoir")
+register_tagged("m3_sep",   "m3", "separator")
+register_tagged("m3_sc",    "m3", "standar_conditions")
+register_tagged("m3_o_res", "m3", "reservoir")
+register_tagged("m3_o_sep", "m3", "separator")
+register_tagged("m3_o_sc",  "m3", "standar_conditions")
+register_tagged("m3_g_res", "m3", "reservoir")
+register_tagged("m3_g_sep", "m3", "separator")
+register_tagged("m3_g_sc",  "m3", "standar_conditions")
+register_tagged("m3_w_res", "m3", "reservoir")
+register_tagged("m3_w_sep", "m3", "separator")
+register_tagged("m3_w_sc",  "m3", "standar_conditions")
 
 # Reservoir and stock-tank standard cubic feet
 # Base is "scf" so SI factors are correct for scf/STB GOR conversions
-register_tagged("scf_res",  "scf",  "reservoir")
-register_tagged("scf_st",   "scf",  "stock_tank")
+register_tagged("cf_res",  "scf",  "reservoir")
+register_tagged("cf_sep",  "scf",  "separator")
 
 # Stock-tank and reservoir barrels — for FVF calculations
-register_tagged("STB",      "bbl",  "stock_tank")
 register_tagged("RB",       "bbl",  "reservoir")
+register_tagged("STB",      "bbl",  "stock_tank")
+register_tagged("bbl_sep",  "bbl",  "separator")
 
 # Mscf tagged variants — for Mscf/STB GOR
-register_tagged("Mscf_res", "Mscf", "reservoir")
-register_tagged("Mscf_st",  "Mscf", "stock_tank")
+register_tagged("Mcf_res",  "Mscf", "reservoir")
+register_tagged("Mcf_sep",  "Mscf", "separator")

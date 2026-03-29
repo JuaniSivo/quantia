@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 def api_to_sg(
     api: Union[float, "UnitFloat", "ProbUnitFloat"]
-) -> Union[float, "ProbUnitFloat"]:
+) -> Union["UnitFloat", "ProbUnitFloat"]:
     """Convert API gravity to specific gravity relative to water at 60°F.
 
     Parameters
@@ -45,7 +45,7 @@ def api_to_sg(
     Raises
     ------
     ValueError
-        If ``api <= −131.5`` (produces zero or negative specific gravity).
+        If ``api <= -131.5`` (produces zero or negative specific gravity).
 
     See Also
     --------
@@ -55,11 +55,11 @@ def api_to_sg(
     --------
     >>> from quantia.petroleum_conversions import api_to_sg
     >>> api_to_sg(10.0)    # water by definition
-    1.0
+    UnitFloat(1.0, '1')
     >>> api_to_sg(35.0)    # medium crude
-    0.8498...
+    UnitFloat(0.8498, '1')
     >>> api_to_sg(60.0)    # light condensate
-    0.7389...
+    UnitFloat(0.7389, '1')
 
     Uncertain API gravity:
 
@@ -71,6 +71,7 @@ def api_to_sg(
     """
 
     from quantia.prob._scalar import ProbUnitFloat as _PUF
+    from quantia._scalar import UnitFloat as _UF
     import array as _array
 
     if isinstance(api, _PUF):
@@ -79,12 +80,12 @@ def api_to_sg(
         return _PUF._from_raw(samples, "1")
 
     v = _extract_value(api)
-    return _api_to_sg_scalar(v)
+    return _UF(_api_to_sg_scalar(v), unit="1")
 
 
 def sg_to_api(
     sg: Union[float, "UnitFloat", "ProbUnitFloat"]
-) -> Union[float, "ProbUnitFloat"]:
+) -> Union["UnitFloat", "ProbUnitFloat"]:
     """Convert specific gravity to API gravity.
 
     Parameters
@@ -110,21 +111,22 @@ def sg_to_api(
     --------
     >>> from quantia.petroleum_conversions import sg_to_api
     >>> sg_to_api(1.0)     # water
-    10.0
+    UnitFloat(10.0, '°API')
     >>> sg_to_api(0.85)    # medium crude
-    35.03...
+    UnitFloat(35.03, '°API')
     """
     
     from quantia.prob._scalar import ProbUnitFloat as _PUF
+    from quantia._scalar import UnitFloat as _UF
     import array as _array
 
     if isinstance(api := sg, _PUF):   # reuse variable name for clarity
         samples = _array.array('d', (
             _sg_to_api_scalar(v) for v in sg._samples))
-        return _PUF._from_raw(samples, "1")
+        return _PUF._from_raw(samples, "°API")
 
     v = _extract_value(sg)
-    return _sg_to_api_scalar(v)
+    return _UF(_sg_to_api_scalar(v), unit="°API")
 
 
 # ── Internal scalar implementations ──────────────────────────────────────────

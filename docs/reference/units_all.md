@@ -559,12 +559,12 @@ and distribution factories.
 | Symbol | Name | SI unit | Factor to SI |
 |--------|------|---------|-------------|
 | `RB`  | barrel [reservoir] | `m^3` | 0.158987 |
-| `Sm3_res`  | cubic metre [reservoir] | `m^3` | 1 |
+| `m3_res`  | cubic metre [reservoir] | `m^3` | 1 |
 
 ## Volume Stock Tank
 
 | Symbol | Name | SI unit | Factor to SI |
 |--------|------|---------|-------------|
-| `Sm3_st`  | cubic metre [stock_tank] | `m^3` | 1 |
+| `m3_sc`  | cubic metre [standar condition] | `m^3` | 1 |
 | `STB`  | barrel [stock_tank] | `m^3` | 0.158987 |
 

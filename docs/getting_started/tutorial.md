@@ -22,6 +22,7 @@ velocity.si_value()            # 10.0  (plain float, in m/s)
 Adding incompatible units raises immediately:
 ```python
 qu.Q(1.0, 'm') + qu.Q(1.0, 's')   # → IncompatibleUnitsError
+# IncompatibleUnitsError: Incompatible units: 'm' and 's'
 ```
 
 Temperature uses the full affine conversion automatically:
@@ -33,7 +34,7 @@ qu.Q(100.0, '°C').to('°F')    # UnitFloat(212.0, '°F')
 Gauge and absolute pressure:
 ```python
 qu.Q(0.0,   'psig').to('psia')   # UnitFloat(14.695..., 'psia')
-qu.Q(100.0, 'psig').to('bara')   # UnitFloat(7.895...,  'bara')
+qu.Q(100.0, 'psig').to('bara')   # UnitFloat(7.908...,  'bara')
 ```
 
 ## Exact arrays — UnitArray
@@ -52,16 +53,18 @@ deep = depths[depths > qu.Q(1200.0, 'm')]
 
 Use `qu.config()` to set the sample count and seed:
 ```python
-with qu.config(n_samples=5000, seed=42):
-    efficiency = qu.ProbUnitFloat.uniform(0.88, 0.95, '1')
-    power_in   = qu.ProbUnitFloat.normal(500.0, 10.0, 'W')
+with qu.config(n_samples=2000, seed=42):
+    efficiency = qu.ProbUnitFloat.uniform(0.88, 0.95, "1")  # ProbUnitFloat(mean=0.9154, std=0.01999, unit='1', n=2000)
+    power_in   = qu.ProbUnitFloat.normal(500.0, 10.0, "W")  # ProbUnitFloat(mean=500.1,  std=10.02,   unit='W', n=2000)
 
-power_out = efficiency * power_in
+power_out = efficiency * power_in # ProbUnitFloat(mean=457.8, std=13.54, unit='W', n=2000
 
-power_out.mean()              # UnitFloat(≈457, 'W')
-power_out.std()               # UnitFloat(≈..., 'W')
-power_out.interval(0.90)      # (P5, P95) as UnitFloat tuple
-power_out.percentile(10)      # P10
+power_out.mean()                  # UnitFloat(457.76..., 'W')
+power_out.std()                   # UnitFloat(13.54...,  'W')
+
+# (lo, hi) 95% CI as UnitFloat tuple
+power_out.interval(0.95)          # (UnitFloat(432.72...,'W'), UnitFloat(484.46..., 'W'))
+power_out.percentile(10)          # UnitFloat(439.82..., 'W')
 ```
 
 ## Petroleum OOIP in 10 lines
@@ -69,10 +72,10 @@ power_out.percentile(10)      # P10
 with qu.config(n_samples=5000, seed=0):
     phi = qu.ProbUnitFloat.triangular(0.12, 0.18, 0.25, '1')
     Sw  = qu.ProbUnitFloat.uniform(0.20, 0.35, '1')
-    Bo  = qu.ProbUnitFloat.normal(1.25, 0.05, 'Sm3_res')
+    Bo  = qu.ProbUnitFloat.normal(1.25, 0.05, 'm3_res/m3_sc')
 
-Vp   = qu.Q(1_000_000.0, 'Sm3_res')   # 1 MMm3 pore volume
-ooip = Vp * phi * (1 - Sw) / (Bo / qu.Q(1.0, 'Sm3_st'))
+Vp   = qu.Q(1_000_000.0, 'm3_res')   # 1 MMm3 pore volume
+ooip = Vp * phi * (1 - Sw) / Bo
 
 lo, hi = ooip.interval(0.80)           # P10–P90
 print(f"OOIP P10: {lo.to('MMbbl'):.2f}")

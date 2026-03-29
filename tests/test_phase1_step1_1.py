@@ -34,6 +34,22 @@ class TestDuplicateGuard:
         # Cleanup
         del _REGISTRY["_test_unit_"]
 
+    def test_overwrite_invalidates_unit_cache(self):
+        from quantia._registry import register, Unit
+        from quantia._compound import _UNIT_CACHE
+
+        register("_test_unit_", Unit("test", "test", "m", 1e3, "_test_unit_"))
+        qu.Q(1, "_test_unit_").to("m")  # populate cache
+
+        register("_test_unit_", Unit("test", "test", "m", 1e-3, "_test_unit_"), overwrite=True) # correct registration
+
+        assert _REGISTRY["_test_unit_"].to_si == 1e-3
+        assert qu.Q(1, "_test_unit_").to("m").value == pytest.approx(0.001)
+
+        # cleanup
+        del _REGISTRY["_test_unit_"]
+        _UNIT_CACHE.pop("_test_unit_", None)
+
 
 # ── 1.1.2  Corrected conversion factors ──────────────────────────────────────
 
