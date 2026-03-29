@@ -186,13 +186,13 @@ class TestTaggedUnits:
         from quantia._registry import get_unit
         assert get_unit("RB").to_si == pytest.approx(0.158987294928, rel=1e-9)
 
-    def test_Mscf_res_si_factor(self):
+    def test_Mcf_res_si_factor(self):
         from quantia._registry import get_unit
-        assert get_unit("Mscf_res").to_si == pytest.approx(0.3048**3 * 1000, rel=1e-9)
+        assert get_unit("Mcf_res").to_si == pytest.approx(0.3048**3 * 1000, rel=1e-9)
 
-    def test_Mscf_st_si_factor(self):
+    def test_Mscf_si_factor(self):
         from quantia._registry import get_unit
-        assert get_unit("Mscf_st").to_si == pytest.approx(0.3048**3 * 1000, rel=1e-9)
+        assert get_unit("Mscf").to_si == pytest.approx(0.3048**3 * 1000, rel=1e-9)
 
     def test_STB_does_not_cancel_with_RB(self):
         # RB/STB is FVF — must not collapse to dimensionless
@@ -201,29 +201,29 @@ class TestTaggedUnits:
         fvf = rb / stb
         assert not fvf.unit.is_dimensionless()
 
-    def test_Sm3_res_does_not_cancel_with_Sm3_st(self):
-        gor = qu.Q(150.0, "Sm3_res") / qu.Q(1.0, "Sm3_st")
+    def test_m3_res_does_not_cancel_with_m3_sc(self):
+        gor = qu.Q(150.0, "m3_res") / qu.Q(1.0, "m3_sc")
         assert not gor.unit.is_dimensionless()
 
-    def test_scf_res_does_not_cancel_with_scf_st(self):
-        gor = qu.Q(1000.0, "scf_res") / qu.Q(1.0, "scf_st")
+    def test_cf_res_does_not_cancel_with_scf(self):
+        gor = qu.Q(1000.0, "cf_res") / qu.Q(1.0, "scf")
         assert not gor.unit.is_dimensionless()
 
-    def test_Mscf_res_does_not_cancel_with_Mscf_st(self):
-        gor = qu.Q(1.0, "Mscf_res") / qu.Q(1.0, "Mscf_st")
+    def test_Mcf_res_does_not_cancel_with_Mscf(self):
+        gor = qu.Q(1.0, "Mcf_res") / qu.Q(1.0, "Mscf")
         assert not gor.unit.is_dimensionless()
 
     def test_GOR_scf_per_STB_to_Sm3_per_Sm3(self):
         """
-        1000 scf_res / STB → Sm3_res/Sm3_st
+        1000 cf_res / STB → m3_res/m3_sc
 
-        SI factor of scf_res/STB:
-          to_si(scf_res) / to_si(STB) = 0.0283168466 / 0.158987294928
+        SI factor of cf_res/STB:
+          to_si(cf_res) / to_si(STB) = 0.0283168466 / 0.158987294928
                                       = 0.17811 m³/m³ per scf/STB
 
         1000 scf/STB × 0.17811 = 178.11 Sm3/Sm3
         """
-        gas = qu.Q(1000.0, "scf_res")
+        gas = qu.Q(1000.0, "cf_res")
         oil = qu.Q(1.0,    "STB")
         gor = gas / oil
 
@@ -238,16 +238,16 @@ class TestTaggedUnits:
 
     def test_OOIP_calculation(self):
         """
-        OOIP = Vp [Sm3_res] × (1 - Sw) / Bo [RB/STB → Sm3_res/Sm3_st]
+        OOIP = Vp [m3_res] × (1 - Sw) / Bo [RB/STB → m3_res/m3_sc]
 
-        Vp    = 1 000 000 Sm3_res
+        Vp    = 1 000 000 m3_res
         Sw    = 0.25
-        Bo    = 1.2 RB/STB  (≈ Sm3_res/Sm3_st, same SI factor)
+        Bo    = 1.2 RB/STB  (≈ m3_res/m3_sc, same SI factor)
 
-        OOIP  = 1e6 × 0.75 / 1.2 = 625 000 Sm3_st
+        OOIP  = 1e6 × 0.75 / 1.2 = 625 000 m3_sc
               = 625 000 / 0.158987... bbl ≈ 3 931 595 bbl
         """
-        Vp  = qu.Q(1_000_000.0, "Sm3_res")
+        Vp  = qu.Q(1_000_000.0, "m3_res")
         Sw  = 0.25
         Bo  = qu.Q(1.2, "RB") / qu.Q(1.0, "STB")
         ooip = Vp * (1 - Sw) / Bo
