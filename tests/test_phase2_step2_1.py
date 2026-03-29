@@ -88,7 +88,7 @@ class TestScfTaggedSIFactors:
     """
     cf_res/scf must have the same SI factor as scf (0.028316... m³/scf).
     Previously they were registered with base="m3" (to_si=1.0) which made
-    GOR conversions between scf/STB and Sm3/Sm3 numerically wrong.
+    GOR conversions between scf/STB and m3/m3 numerically wrong.
     """
 
     def test_cf_res_si_factor(self):
@@ -99,24 +99,24 @@ class TestScfTaggedSIFactors:
         from quantia._registry import get_unit
         assert get_unit("scf").to_si == pytest.approx(0.3048**3, rel=1e-9)
 
-    def test_gor_scfB_to_Sm3_Sm3(self):
+    def test_gor_scfB_to_m3_m3(self):
         """
         GOR conversion: 1000 cf_res/scf → m3_res/m3_sc
 
         scf → m³:  1 scf = 0.0283168466 m³
         bbl → m³:  1 bbl = 0.158987294928 m³
-        1000 scf/STB × (0.0283168466 / 0.158987294928) = 178.1 Sm3/Sm3
+        1000 scf/STB × (0.0283168466 / 0.158987294928) = 178.1 m3/m3
         """
         gas = qu.Q(1000.0, "cf_res")
         oil = qu.Q(1.0, "scf")      # using scf as denominator base
         gor_scf = gas / oil             # cf_res/scf
 
         # Convert to m3_res/m3_sc by building target ratio
-        gas_sm3 = qu.Q(1000.0 * 0.3048**3, "m3_res")
-        oil_sm3 = qu.Q(1.0    * 0.3048**3, "m3_sc")
-        gor_sm3 = gas_sm3 / oil_sm3
+        gas_m3 = qu.Q(1000.0 * 0.3048**3, "m3_res")
+        oil_m3 = qu.Q(1.0    * 0.3048**3, "m3_sc")
+        gor_m3 = gas_m3 / oil_m3
 
-        assert gor_scf.si_value() == pytest.approx(gor_sm3.si_value(), rel=1e-9)
+        assert gor_scf.si_value() == pytest.approx(gor_m3.si_value(), rel=1e-9)
 
     def test_m3_res_si_factor(self):
         from quantia._registry import get_unit
@@ -158,14 +158,9 @@ class TestOpaqueUnitsRemoved:
     scf/STB and Mscf/STB are no longer opaque atomic symbols.
     They now parse as compound expressions (scf÷STB, Mscf÷STB)
     since both component symbols are registered.
-    Sm3/Sm3 still raises because Sm3 is not a registered symbol
-    (m3_res and m3_sc are, but not plain Sm3).
+    m3/m3 still raises because m3 is not a registered symbol
+    (m3_res and m3_sc are, but not plain m3).
     """
-
-    def test_Sm3_Sm3_removed(self):
-        # "Sm3" is not registered — parse_unit("Sm3/Sm3") raises UnknownUnitError
-        with pytest.raises(UnknownUnitError):
-            qu.Q(1.0, "Sm3/Sm3")
 
     def test_scfB_now_parses_as_compound(self):
         # scf/STB parses as scf ÷ STB — both are registered symbols

@@ -22,7 +22,7 @@ print(gor.si_value())   # 178.107...  m³/m³
 
 The SI value is the universal exchange rate:
 ```python
-# 1000 scf/STB expressed as Sm3/Sm3
+# 1000 scf/STB expressed as m3/m3
 gor_si = gor.si_value()       # 178.107 m³/m³
 
 # Verify: build same GOR in m3 units

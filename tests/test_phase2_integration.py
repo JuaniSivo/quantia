@@ -180,7 +180,7 @@ class TestVolumetricOGIP:
 class TestGORWorkflow:
 
     def test_GOR_field_to_SI_to_field(self):
-        # 500 scf/STB → SI (m³/m³) → Sm3/Sm3 (=SI for these units)
+        # 500 scf/STB → SI (m³/m³) → m3/m3 (=SI for these units)
         gor = qu.Q(500.0, "cf_res") / qu.Q(1.0, "STB")
         si  = gor.si_value()
         expected = 500.0 * _SCF / _BBL
@@ -193,12 +193,12 @@ class TestGORWorkflow:
 
     def test_GOR_classification(self):
         # Physical GOR ranges:
-        # < 200 Sm3/Sm3 → black oil / volatile oil
-        # > 600 Sm3/Sm3 → gas condensate
-        def classify(gor_sm3_sm3):
-            if gor_sm3_sm3 < 200:
+        # < 200 m3/m3 → black oil / volatile oil
+        # > 600 m3/m3 → gas condensate
+        def classify(gor_m3_m3):
+            if gor_m3_m3 < 200:
                 return "oil"
-            elif gor_sm3_sm3 > 600:
+            elif gor_m3_m3 > 600:
                 return "condensate"
             return "volatile"
 

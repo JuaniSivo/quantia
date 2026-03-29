@@ -72,9 +72,9 @@ power_out.percentile(10)          # UnitFloat(439.82..., 'W')
 with qu.config(n_samples=5000, seed=0):
     phi = qu.ProbUnitFloat.triangular(0.12, 0.18, 0.25, '1')
     Sw  = qu.ProbUnitFloat.uniform(0.20, 0.35, '1')
-    Bo  = qu.ProbUnitFloat.normal(1.25, 0.05, 'Sm3_res/Sm3_st')
+    Bo  = qu.ProbUnitFloat.normal(1.25, 0.05, 'm3_res/m3_sc')
 
-Vp   = qu.Q(1_000_000.0, 'Sm3_res')   # 1 MMm3 pore volume
+Vp   = qu.Q(1_000_000.0, 'm3_res')   # 1 MMm3 pore volume
 ooip = Vp * phi * (1 - Sw) / Bo
 
 lo, hi = ooip.interval(0.80)           # P10–P90

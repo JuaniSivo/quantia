@@ -213,7 +213,7 @@ class TestTaggedUnits:
         gor = qu.Q(1.0, "Mcf_res") / qu.Q(1.0, "Mscf")
         assert not gor.unit.is_dimensionless()
 
-    def test_GOR_scf_per_STB_to_Sm3_per_Sm3(self):
+    def test_GOR_scf_per_STB_to_m3_per_m3(self):
         """
         1000 cf_res / STB → m3_res/m3_sc
 
@@ -221,7 +221,7 @@ class TestTaggedUnits:
           to_si(cf_res) / to_si(STB) = 0.0283168466 / 0.158987294928
                                       = 0.17811 m³/m³ per scf/STB
 
-        1000 scf/STB × 0.17811 = 178.11 Sm3/Sm3
+        1000 scf/STB × 0.17811 = 178.11 m3/m3
         """
         gas = qu.Q(1000.0, "cf_res")
         oil = qu.Q(1.0,    "STB")

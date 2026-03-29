@@ -32,7 +32,7 @@ calculations. Internally stores Monte Carlo samples.
 ```python
 with qu.config(n_samples=3000):
     porosity = qu.ProbUnitFloat.triangular(0.12, 0.18, 0.25, '1')
-    Bo       = qu.ProbUnitFloat.normal(1.25, 0.05, 'Sm3_res')
+    Bo       = qu.ProbUnitFloat.normal(1.25, 0.05, 'm3_res')
 ```
 
 ## ProbUnitArray — uncertain vector
@@ -57,7 +57,7 @@ layers.intervals(0.8)   # list of (P10, P90) tuples
 Exact values can be combined with uncertain values freely.
 The result is always uncertain:
 ```python
-Vp       = qu.Q(1_000_000.0, 'Sm3_res')    # exact
+Vp       = qu.Q(1_000_000.0, 'm3_res')    # exact
 porosity = qu.ProbUnitFloat.uniform(...)   # uncertain
 Vp_pore  = Vp * porosity                   # → ProbUnitFloat
 ```

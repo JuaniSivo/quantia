@@ -101,7 +101,7 @@ m3_g_res or m3_w_res.
 > (2) cf_sc does not exist because it is covered by scf (standard cubic
 foot).
 
-### GOR conversion: scf/STB ↔ Sm3/Sm3
+### GOR conversion: scf/STB ↔ m3/m3
 
 Tag-based conversion works automatically through SI factors:
 ```python

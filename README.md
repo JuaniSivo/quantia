@@ -139,11 +139,11 @@ Dimensionally equal but semantically distinct units that won't cancel:
 ```python
 from quantia import register_tagged
 
-register_tagged("Sm3_res", "m3", "reservoir")
-register_tagged("Sm3_st",  "m3", "stock_tank")
+register_tagged("m3_res", "m3", "reservoir")
+register_tagged("m3_sc",  "m3", "standar condition")
 
-Bo = qu.Q(1.1, "Sm3_res") / qu.Q(1.0, "Sm3_st")
-# UnitFloat(1.1, 'Sm3_res/Sm3_st')  — does not reduce to 1
+Bo = qu.Q(1.1, "m3_res") / qu.Q(1.0, "m3_sc")
+# UnitFloat(1.1, 'm3_res/m3_sc')  — does not reduce to 1
 ```
 
 ---

@@ -45,9 +45,9 @@ class ProbUnitFloat:
     Petroleum OOIP with uncertain Bo:
 
     >>> with qu.config(seed=0, n_samples=3000):
-    ...     Bo = qu.ProbUnitFloat.normal(1.25, 0.05, 'Sm3_res')
-    >>> Vp   = qu.Q(1_000_000.0, 'Sm3_res')
-    >>> ooip = Vp * 0.75 / (Bo / qu.Q(1.0, 'Sm3_st'))
+    ...     Bo = qu.ProbUnitFloat.normal(1.25, 0.05, 'm3_res')
+    >>> Vp   = qu.Q(1_000_000.0, 'm3_res')
+    >>> ooip = Vp * 0.75 / (Bo / qu.Q(1.0, 'm3_sc'))
     >>> ooip.percentile(10)   # P10
     UnitFloat(..., ...)
     """

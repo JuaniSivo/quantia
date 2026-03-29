@@ -90,17 +90,17 @@ class TestNonCancellation:
 
 class TestGOR:
     """
-    GOR unit conversion: scf/STB ↔ Sm3/Sm3 ↔ Mscf/STB
+    GOR unit conversion: scf/STB ↔ m3/m3 ↔ Mscf/STB
 
     Key identity:
-      1 Sm3/Sm3 = 1 m³ gas / 1 m³ oil at surface
+      1 m3/m3 = 1 m³ gas / 1 m³ oil at surface
                = (1/0.3048³) scf / (1/0.158987...) STB
                = 5.614 scf/STB
     """
 
-    _SM3_PER_scfB = _SCF / _BBL   # ≈ 0.178107 Sm3/Sm3 per scf/STB
+    _m3_PER_scfB = _SCF / _BBL   # ≈ 0.178107 m3/m3 per scf/STB
 
-    def test_GOR_Sm3_Sm3_si_value(self):
+    def test_GOR_m3_m3_si_value(self):
         # 200 m3_res / 1 m3_sc — SI value = 200 (both m³, ratio = 200)
         gor = qu.Q(200.0, "m3_res") / qu.Q(1.0, "m3_sc")
         assert gor.si_value() == pytest.approx(200.0, rel=1e-9)
@@ -112,32 +112,32 @@ class TestGOR:
         expected = 1000.0 * _SCF / _BBL
         assert gor.si_value() == pytest.approx(expected, rel=1e-9)
 
-    def test_GOR_1000_scfB_to_Sm3_Sm3(self):
+    def test_GOR_1000_scfB_to_m3_m3(self):
         # 1000 scf/STB × (0.3048³ m³/scf) / (0.158987... m³/STB)
-        #              = 178.107 Sm3/Sm3
+        #              = 178.107 m3/m3
         gor_scf = qu.Q(1000.0, "cf_res") / qu.Q(1.0, "STB")
-        gor_sm3 = qu.Q(200.0,  "m3_res") / qu.Q(1.0, "m3_sc")
-        # 1000 scf/STB in Sm3/Sm3:
-        expected_sm3 = 1000.0 * _SCF / _BBL
-        assert gor_scf.si_value() == pytest.approx(expected_sm3, rel=1e-9)
-        # Cross-check: 1000 scf/STB ≠ 200 Sm3/Sm3
-        assert gor_scf.si_value() != pytest.approx(gor_sm3.si_value(), rel=1e-2)
+        gor_m3 = qu.Q(200.0,  "m3_res") / qu.Q(1.0, "m3_sc")
+        # 1000 scf/STB in m3/m3:
+        expected_m3 = 1000.0 * _SCF / _BBL
+        assert gor_scf.si_value() == pytest.approx(expected_m3, rel=1e-9)
+        # Cross-check: 1000 scf/STB ≠ 200 m3/m3
+        assert gor_scf.si_value() != pytest.approx(gor_m3.si_value(), rel=1e-2)
 
-    def test_GOR_MscfB_to_Sm3_Sm3(self):
-        # 1 Mscf/STB = 1000 scf/STB = 178.107 Sm3/Sm3
+    def test_GOR_MscfB_to_m3_m3(self):
+        # 1 Mscf/STB = 1000 scf/STB = 178.107 m3/m3
         gor_mscf = qu.Q(1.0, "Mcf_res") / qu.Q(1.0, "STB")
         gor_scf  = qu.Q(1000.0, "cf_res") / qu.Q(1.0, "STB")
         assert gor_mscf.si_value() == pytest.approx(gor_scf.si_value(), rel=1e-9)
 
-    def test_GOR_conversion_scfB_to_Sm3_Sm3_numeric(self):
-        # Explicit: 5 000 scf/STB → Sm3/Sm3
-        # = 5000 × 0.3048³ / 0.158987... = 890.53 Sm3/Sm3
+    def test_GOR_conversion_scfB_to_m3_m3_numeric(self):
+        # Explicit: 5 000 scf/STB → m3/m3
+        # = 5000 × 0.3048³ / 0.158987... = 890.53 m3/m3
         gor = qu.Q(5_000.0, "cf_res") / qu.Q(1.0, "STB")
         expected = 5_000.0 * _SCF / _BBL
         assert gor.si_value() == pytest.approx(expected, rel=1e-9)
 
     def test_GOR_typical_oil_reservoir(self):
-        # Typical solution GOR for medium-gravity oil: ~100 Sm3/Sm3
+        # Typical solution GOR for medium-gravity oil: ~100 m3/m3
         gor = qu.Q(100.0, "m3_res") / qu.Q(1.0, "m3_sc")
         assert gor.si_value() == pytest.approx(100.0, rel=1e-9)
         assert 50 < gor.si_value() < 500   # physically reasonable range
@@ -174,8 +174,8 @@ class TestFVF:
         # Both FVF representations have identical SI value
         # (all four units have same SI base m³)
         bo_rb  = qu.Q(1.2, "RB")  / qu.Q(1.0, "STB")
-        bo_sm3 = qu.Q(1.2, "m3_res") / qu.Q(1.0, "m3_sc")
-        assert bo_rb.si_value() == pytest.approx(bo_sm3.si_value(), rel=1e-9)
+        bo_m3 = qu.Q(1.2, "m3_res") / qu.Q(1.0, "m3_sc")
+        assert bo_rb.si_value() == pytest.approx(bo_m3.si_value(), rel=1e-9)
 
     def test_Bo_not_dimensionless(self):
         bo = qu.Q(1.2, "RB") / qu.Q(1.0, "STB")
@@ -252,7 +252,7 @@ class TestOGIP:
     Simplified: OGIP = Vp × (1 - Sw)  [in scf, using cf_res volumes]
     """
 
-    def test_OGIP_Sm3_basis(self):
+    def test_OGIP_m3_basis(self):
         # Vp=1e8 m3_res, Sw=0.30, Bg=0.005 (tight gas)
         # OGIP = 1e8 × 0.70 / 0.005 = 1.4e10 m3_sc
         Vp   = qu.Q(1e8, "m3_res")

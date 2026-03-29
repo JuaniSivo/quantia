@@ -11,7 +11,7 @@ Notes
 -----
 - m3 is registered in si.py as an atomic alias for m^3.
 - psi_g is a deprecated alias — redirects to psig with a warning.
-- Opaque named ratio units (Sm3/Sm3, scf/STB, Mscf/STB) removed.
+- Opaque named ratio units (m3/m3, scf/STB, Mscf/STB) removed.
   Use register_tagged() units for GOR and FVF calculations.
 """
 from quantia._registry import Unit, register, _AMBIGUOUS_UNITS
