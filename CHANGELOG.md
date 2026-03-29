@@ -4,6 +4,21 @@ All notable changes to quantia are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.2.2] - 2026-03-29
+
+### Added
+- Basic python operations (+, -, *, /, **) work across UnitFloat,
+  UnitArray, ProbUnitFloat, ProbUnitArray via _dispatch.py
+- UnitArray gains _len attribute to standarize the main classes
+
+### Fixed
+- #1: invalidate _UNIT_CACHE on register(overwrite=True)
+- #2: sg_to_api returns UnitFloat when input is UnitFloat
+- #3: sg_to_api uses '°API' unit for ProbUnitFloat return
+- #5: UnitFloat.__pow__ accepts dimensionless UnitFloat exponent
+
+---
+
 ## [0.2.1] - 2026-03-21
 
 ### Added
