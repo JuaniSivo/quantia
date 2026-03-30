@@ -172,11 +172,13 @@ and distribution factories.
 | `BLPD`  | barrels of liquid per day | `m^3/s` | 1.84013e-06 |
 | `Bscf/day`  | billion scf per day | `m^3/s` | 327.741 |
 | `gal/min`  | US gallons per minute | `m^3/s` | 6.30902e-05 |
+| `k(m3)/day`  | thousand cubic metres per day | `m^3/s` | 0.0115741 |
 | `L/s`  | litres per second | `m^3/s` | 0.001 |
 | `m3/day`  | cubic metres per day | `m^3/s` | 1.15741e-05 |
 | `m3/h`  | cubic metres per hour | `m^3/s` | 0.000277778 |
 | `Mbbl/day`  | thousand barrels per day | `m^3/s` | 0.00184013 |
 | `MMbbl/day`  | million barrels per day | `m^3/s` | 1.84013 |
+| `MMm3/day`  | million cubic metres per day | `m^3/s` | 11.5741 |
 | `MMscf/day`  | million scf per day | `m^3/s` | 0.327741 |
 | `Mscf/day`  | thousand scf per day | `m^3/s` | 0.000327741 |
 
@@ -221,15 +223,13 @@ and distribution factories.
 
 | Symbol | Name | SI unit | Factor to SI |
 |--------|------|---------|-------------|
-| `Mscf_res`  | thousand standard cu ft [reservoir] | `m^3` | 28.3168 |
-| `scf_res`  | standard cubic foot [reservoir] | `m^3` | 0.0283168 |
+| `Mcf_res`  | thousand standard cu ft [reservoir] | `m^3` | 28.3168 |
 
-## Gas Volume Stock Tank
+## Gas Volume Separator
 
 | Symbol | Name | SI unit | Factor to SI |
 |--------|------|---------|-------------|
-| `Mscf_st`  | thousand standard cu ft [stock_tank] | `m^3` | 28.3168 |
-| `scf_st`  | standard cubic foot [stock_tank] | `m^3` | 0.0283168 |
+| `Mcf_sep`  | thousand standard cu ft [separator] | `m^3` | 28.3168 |
 
 ## Heat Capacity
 
@@ -544,6 +544,7 @@ and distribution factories.
 | `gal`  | US gallon | `m^3` | 0.00378541 |
 | `gal_imp`  | Imperial gallon | `m^3` | 0.00454609 |
 | `in3`  | cubic inch | `m^3` | 1.63871e-05 |
+| `k(m3)`  | thousand cubic metres | `m^3` | 1000 |
 | `L`  | litre | `m^3` | 0.001 |
 | `m3`  | cubic metre | `m^3` | 1 |
 | `Mbbl`  | thousand barrels | `m^3` | 158.987 |
@@ -558,13 +559,36 @@ and distribution factories.
 
 | Symbol | Name | SI unit | Factor to SI |
 |--------|------|---------|-------------|
-| `RB`  | barrel [reservoir] | `m^3` | 0.158987 |
+| `cf_res`  | cubic foot [reservoir] | `m^3` | 0.0283168 |
+| `m3_g_res`  | cubic metre [reservoir] | `m^3` | 1 |
+| `m3_o_res`  | cubic metre [reservoir] | `m^3` | 1 |
 | `m3_res`  | cubic metre [reservoir] | `m^3` | 1 |
+| `m3_w_res`  | cubic metre [reservoir] | `m^3` | 1 |
+| `RB`  | barrel [reservoir] | `m^3` | 0.158987 |
+
+## Volume Separator
+
+| Symbol | Name | SI unit | Factor to SI |
+|--------|------|---------|-------------|
+| `bbl_sep`  | barrel [separator] | `m^3` | 0.158987 |
+| `cf_sep`  | cubic foot [separator] | `m^3` | 0.0283168 |
+| `m3_g_sep`  | cubic metre [separator] | `m^3` | 1 |
+| `m3_o_sep`  | cubic metre [separator] | `m^3` | 1 |
+| `m3_sep`  | cubic metre [separator] | `m^3` | 1 |
+| `m3_w_sep`  | cubic metre [separator] | `m^3` | 1 |
+
+## Volume Standar Conditions
+
+| Symbol | Name | SI unit | Factor to SI |
+|--------|------|---------|-------------|
+| `m3_g_sc`  | cubic metre [standar_conditions] | `m^3` | 1 |
+| `m3_o_sc`  | cubic metre [standar_conditions] | `m^3` | 1 |
+| `m3_sc`  | cubic metre [standar_conditions] | `m^3` | 1 |
+| `m3_w_sc`  | cubic metre [standar_conditions] | `m^3` | 1 |
 
 ## Volume Stock Tank
 
 | Symbol | Name | SI unit | Factor to SI |
 |--------|------|---------|-------------|
-| `m3_sc`  | cubic metre [standar condition] | `m^3` | 1 |
 | `STB`  | barrel [stock_tank] | `m^3` | 0.158987 |
 
