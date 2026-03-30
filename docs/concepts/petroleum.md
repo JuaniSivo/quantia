@@ -95,9 +95,9 @@ Bo.to("RB/STB")          # UnitFloat(1.1, 'RB/STB')
 | `Mcf_res`    | ft^3 | reservoir         | Reservoir gas volumes        |
 | `Mcf_sep`    | ft^3 | separator         | Separator gas volumes        |
 
-> [!NOTE]
 > (1) It is also available in fluid-specific versions. Example: m3_o_res,
 m3_g_res or m3_w_res.
+>
 > (2) cf_sc does not exist because it is covered by scf (standard cubic
 foot).
 

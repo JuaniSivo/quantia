@@ -66,10 +66,10 @@ _reg("Mbbl/day",  "thousand barrels per day", "flow_rate", "m^3/s", 158.98729492
 _reg("MMbbl/day", "million barrels per day",  "flow_rate", "m^3/s", 158_987.294928 / 86_400)
 # 1 MMbbl/day = 1e6 bbl/day
 
-_reg("m3/day",    "cubic metres per day",     "flow_rate", "m^3/s", 1.0            / 86_400)
-_reg("k(m3)/day", "cubic metres per day",     "flow_rate", "m^3/s", 1000           / 86_400)
-_reg("Mm3/day",   "cubic metres per day",     "flow_rate", "m^3/s", 1000000        / 86_400)
-_reg("m3/h",      "cubic metres per hour",    "flow_rate", "m^3/s", 1.0            /  3_600)
+_reg("m3/day",    "cubic metres per day",          "flow_rate", "m^3/s", 1.0     / 86_400)
+_reg("k(m3)/day", "thousand cubic metres per day", "flow_rate", "m^3/s", 1000    / 86_400)
+_reg("MMm3/day",  "million cubic metres per day",  "flow_rate", "m^3/s", 1000000 / 86_400)
+_reg("m3/h",      "cubic metres per hour",         "flow_rate", "m^3/s", 1.0     /  3_600)
 # 1 m³/h = 1/3600 m³/s
 
 _reg("Mscf/day",  "thousand scf per day",  "flow_rate", "m^3/s", 0.3048**3 * 1_000 / 86_400)
@@ -126,8 +126,8 @@ register_tagged("m3_w_sc",  "m3", "standar_conditions")
 
 # Reservoir and stock-tank standard cubic feet
 # Base is "scf" so SI factors are correct for scf/STB GOR conversions
-register_tagged("cf_res",  "scf",  "reservoir")
-register_tagged("cf_sep",  "scf",  "separator")
+register_tagged("cf_res",  "ft3",  "reservoir")
+register_tagged("cf_sep",  "ft3",  "separator")
 
 # Stock-tank and reservoir barrels — for FVF calculations
 register_tagged("RB",       "bbl",  "reservoir")
